@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(
-    vulkantest
-    LANGUAGES
-    C
-    CXX
+    vulkantest 
+    LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -19,6 +17,8 @@ find_package(glm REQUIRED)
 add_executable(
     vulkantest 
     src/main.cpp
+    src/platform/renderer.cpp
+    src/app/App.cpp
 )
 
 target_link_libraries(
@@ -27,10 +27,4 @@ target_link_libraries(
     Vulkan::Vulkan
     glfw
     glm::glm
-)
-
-target_compile_definitions(
-    vulkantest
-    PRIVATE
-    VK_USE_PLATFORM_MACOS_MVK
 )
