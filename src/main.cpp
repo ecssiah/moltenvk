@@ -41,14 +41,14 @@ struct Renderer
     {
         vkDeviceWaitIdle(device);
 
-        for (auto framebuffer : frame_buffer_vec)
+        for (VkFramebuffer_T* framebuffer : frame_buffer_vec)
         {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
 
         vkDestroyRenderPass(device, render_pass, nullptr);
 
-        for (auto view : image_view_vec)
+        for (VkImageView_T* view : image_view_vec)
         {
             vkDestroyImageView(device, view, nullptr);
         }
@@ -150,7 +150,7 @@ private:
         std::vector<VkPhysicalDevice> device_vec(device_count);
         vkEnumeratePhysicalDevices(instance, &device_count, device_vec.data());
 
-        for (auto device : device_vec)
+        for (VkPhysicalDevice_T* device : device_vec)
         {
             uint32_t queue_family_count = 0;
             vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
