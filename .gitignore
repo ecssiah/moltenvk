@@ -1,0 +1,62 @@
+# Build folders
+/build/
+/cmake-build-*/
+/out/
+/bin/
+/obj/
+/Debug/
+/Release/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+*.ninja
+*.ninja_log
+*.ninja_deps
+
+# Generated Xcode project files (if you generate with CMake)
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+
+# Executables
+*.app
+*.dSYM/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# Local tool caches
+.cache/
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# VSCode
+.vscode/
+
+# JetBrains (Rider, CLion)
+.idea/
+*.iml
+
+# Local Vulkan SDK installs
+/VulkanSDK/
+/MoltenVK/
+
+# Shader binaries (if compiling at build time)
+*.spv
+
+# MoltenVK build output
+MoltenVK/build/
+MoltenVK/Package/
