@@ -7,5 +7,12 @@ void App::init()
 
 void App::start()
 {
-    renderer.draw();
+    while (!glfwWindowShouldClose(renderer.window))
+    {
+        glfwPollEvents();
+
+        renderer.draw_frame();
+    }
+
+    renderer.wait_idle();
 }
