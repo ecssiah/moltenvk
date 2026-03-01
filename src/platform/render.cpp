@@ -1,7 +1,9 @@
 #include "render.h"
 
-#include <fstream>
+#include <cstdio>
+#include <cstdlib>
 #include <GLFW/glfw3.h>
+#include <stdexcept>
 
 #include "frame_context.h"
 
@@ -126,17 +128,17 @@ void create_frame_contexts(Render *render)
     command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     command_buffer_allocate_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-    std::vector<VkCommandBuffer> command_buffer_vec(MAX_FRAMES_IN_FLIGHT);
+    VkCommandBuffer command_buffer_array[MAX_FRAMES_IN_FLIGHT];
 
     vkAllocateCommandBuffers(
         render->vulkan_context.device, 
         &command_buffer_allocate_info, 
-        command_buffer_vec.data()
+        command_buffer_array
     );
 
     for (uint32_t frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
-        render->frame_context_array[frame_index].command_buffer = command_buffer_vec[frame_index];
+        render->frame_context_array[frame_index].command_buffer = command_buffer_array[frame_index];
     }
 
     VkSemaphoreCreateInfo semaphore_create_info = {};
@@ -176,10 +178,15 @@ void create_frame_contexts(Render *render)
 void create_instance(Render* render)
 {
     uint32_t extension_count = 0;
-    const char** extensions = glfwGetRequiredInstanceExtensions(&extension_count);
+    const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
+    const char** required_extension_array = (const char**)malloc(sizeof(const char*) * (extension_count + 1));
 
-    std::vector<const char*> required_extension_vec(extensions, extensions + extension_count);
-    required_extension_vec.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    for (uint32_t extension_index = 0; extension_index < extension_count; ++extension_index)
+    {
+        required_extension_array[extension_index] = extension_array[extension_index];
+    }
+
+    required_extension_array[extension_count] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
 
     VkApplicationInfo application_info = {};
     application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -193,8 +200,8 @@ void create_instance(Render* render)
     instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = &application_info;
     instance_create_info.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-    instance_create_info.enabledExtensionCount = static_cast<uint32_t>(required_extension_vec.size());
-    instance_create_info.ppEnabledExtensionNames = required_extension_vec.data();
+    instance_create_info.enabledExtensionCount = extension_count + 1;
+    instance_create_info.ppEnabledExtensionNames = required_extension_array;
 
     if (
         vkCreateInstance(
@@ -203,8 +210,12 @@ void create_instance(Render* render)
             &render->vulkan_context.instance
         ) != VK_SUCCESS
     ) {
+        free(required_extension_array);
+
         throw std::runtime_error("Failed to create instance");
     }
+
+    free(required_extension_array);
 }
 
 void create_surface(Render* render, GLFWwindow* window)
@@ -226,31 +237,45 @@ void pick_physical_device(Render* render)
     uint32_t device_count = 0;
     vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, nullptr);
 
-    std::vector<VkPhysicalDevice> device_vec(device_count);
-    vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, device_vec.data());
-
-    for (VkPhysicalDevice_T* device : device_vec)
+    if (device_count == 0)
     {
+        throw std::runtime_error("No Vulkan physical devices found");
+    }
+
+    VkPhysicalDevice* physical_device_array = (VkPhysicalDevice*)malloc(sizeof(VkPhysicalDevice) * device_count);
+    vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, physical_device_array);
+
+    for (uint32_t device_index = 0; device_index < device_count; ++device_index)
+    {
+        VkPhysicalDevice device = physical_device_array[device_index];
+
         uint32_t queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
 
-        std::vector<VkQueueFamilyProperties> queue_family_vec(queue_family_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_family_vec.data());
+        VkQueueFamilyProperties* queue_family_properties_array = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * queue_family_count);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_family_properties_array);
 
-        for (uint32_t i = 0; i < queue_family_count; ++i)
+        for (uint32_t queue_family_index = 0; queue_family_index < queue_family_count; ++queue_family_index)
         {
             VkBool32 present_support = VK_FALSE;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, render->vulkan_context.surface, &present_support);
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, queue_family_index, render->vulkan_context.surface, &present_support);
 
-            if ((queue_family_vec[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && present_support)
+            if ((queue_family_properties_array[queue_family_index].queueFlags & VK_QUEUE_GRAPHICS_BIT) && present_support)
             {
                 render->vulkan_context.physical_device = device;
-                render->vulkan_context.graphics_queue_family_index = i;
+                render->vulkan_context.graphics_queue_family_index = queue_family_index;
+
+                free(queue_family_properties_array);
+                free(physical_device_array);
 
                 return;
             }
         }
+
+        free(queue_family_properties_array);
     }
+
+    free(physical_device_array);
 
     throw std::runtime_error("No suitable GPU found");
 }
@@ -292,12 +317,21 @@ void create_swapchain(Render* render)
     uint32_t format_count;
     vkGetPhysicalDeviceSurfaceFormatsKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &format_count, nullptr);
 
-    std::vector<VkSurfaceFormatKHR> format_vec(format_count);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &format_count, format_vec.data());
+    VkSurfaceFormatKHR* surface_format_array =
+        (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * format_count);
 
-    VkSurfaceFormatKHR format = format_vec[0];
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        render->vulkan_context.physical_device,
+        render->vulkan_context.surface,
+        &format_count,
+        surface_format_array
+    );
+
+    VkSurfaceFormatKHR format = surface_format_array[0];
     render->swapchain_context.format = format.format;
     render->swapchain_context.extent = surface_capabilities.currentExtent;
+
+    free(surface_format_array);
 
     VkSwapchainCreateInfoKHR instance_create_info = {};
     instance_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -397,48 +431,69 @@ void create_render_pass(Render* render)
     );
 }
 
-std::vector<char> read_file(const std::string& filename)
+size_t read_file_binary(const char* filename, char** out_buffer)
 {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+    FILE* file = fopen(filename, "rb");
 
-    if (!file.is_open())
+    if (!file)
     {
-        throw std::runtime_error("failed to open shader file");
+        throw std::runtime_error("Failed to open shader file");
     }
 
-    size_t file_size = (size_t)file.tellg();
-    std::vector<char> buffer_vec(file_size);
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    rewind(file);
 
-    file.seekg(0);
-    file.read(buffer_vec.data(), file_size);
-    file.close();
+    char* buffer = (char*)malloc(file_size);
 
-    return buffer_vec;
+    if (!buffer)
+    {
+        fclose(file);
+        
+        throw std::runtime_error("failed to allocate shader buffer"); 
+    }
+
+    fread(buffer, 1, file_size, file);
+    fclose(file);
+
+    *out_buffer = buffer;
+
+    return file_size;
 }
 
-VkShaderModule create_shader_module(VkDevice device, const std::vector<char>& code)
+VkShaderModule create_shader_module(VkDevice device, const char* filename)
 {
+    char* shader_src = nullptr;
+    size_t shader_src_size = read_file_binary(filename, &shader_src);
+
     VkShaderModuleCreateInfo create_info = {};
     create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    create_info.codeSize = code.size();
-    create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    create_info.codeSize = shader_src_size;
+    create_info.pCode = (const uint32_t*)shader_src;
 
     VkShaderModule shader_module;
     if (vkCreateShaderModule(device, &create_info, nullptr, &shader_module) != VK_SUCCESS)
     {
+        free(shader_src);
         throw std::runtime_error("failed to create shader module");
     }
+
+    free(shader_src);
 
     return shader_module;
 }
 
 void create_graphics_pipeline(Render* render)
 {
-    std::vector<char> vert_shader_code = read_file("shaders/bin/test.vert.spv");
-    std::vector<char> frag_shader_code = read_file("shaders/bin/test.frag.spv");
+    VkShaderModule vert_module = create_shader_module(
+        render->vulkan_context.device, 
+        "shaders/bin/test.vert.spv"
+    );
 
-    VkShaderModule vert_module = create_shader_module(render->vulkan_context.device, vert_shader_code);
-    VkShaderModule frag_module = create_shader_module(render->vulkan_context.device, frag_shader_code);
+    VkShaderModule frag_module = create_shader_module(
+        render->vulkan_context.device, 
+        "shaders/bin/test.frag.spv"
+    );
 
     VkPipelineShaderStageCreateInfo vert_stage = {};
     vert_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
