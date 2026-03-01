@@ -31,7 +31,6 @@ foreach(SHADER ${SHADER_SOURCES})
 
     add_custom_command(
         OUTPUT ${SPIRV}
-        COMMAND ${GLSLC} ${SHADER} -o ${SPIRV}
         COMMAND ${GLSLC} -Werror ${SHADER} -o ${SPIRV}
         DEPENDS ${SHADER}
         COMMENT "Compiling shader ${FILE_NAME}"
@@ -46,7 +45,7 @@ add_custom_target(Shaders ALL DEPENDS ${SPIRV_SHADERS})
 add_executable(
     vulkantest 
     src/main.cpp
-    src/platform/renderer.cpp
+    src/platform/render.cpp
     src/app/App.cpp
 )
 

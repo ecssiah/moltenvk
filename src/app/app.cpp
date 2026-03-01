@@ -1,18 +1,38 @@
 #include "app.h"
 
-void App::init()
+void app_init(App* app)
 {
-    renderer.init();
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    app->window = glfwCreateWindow(
+        WINDOW_WIDTH, 
+        WINDOW_HEIGHT, 
+        "Vulkan Test", 
+        nullptr, 
+        nullptr
+    );
+
+    app->render = {};
+    app->render.window = app->window;
+
+    render_init(&app->render);
 }
 
-void App::start()
+void app_start(App* app)
 {
-    while (!glfwWindowShouldClose(renderer.window))
+    while (!glfwWindowShouldClose(app->window))
     {
         glfwPollEvents();
 
-        renderer.draw_frame();
+        render_frame(&app->render);
     }
+}
 
-    renderer.wait_idle();
+void app_shutdown(App* app) 
+{
+    render_destroy(&app->render);
+
+    glfwDestroyWindow(app->window);
+    glfwTerminate();
 }

@@ -4,6 +4,6 @@ int main()
 {
     App app;
 
-    app.init();
-    app.start();
+    app_init(&app);
+    app_start(&app);
 }
