@@ -1,8 +1,9 @@
 #include "render.h"
-#include "frame_context.h"
 
 #include <fstream>
 #include <GLFW/glfw3.h>
+
+#include "frame_context.h"
 
 void render_init(Render* render)
 {
@@ -21,6 +22,89 @@ void render_init(Render* render)
     create_voxel_pipeline(render);
 }
 
+void render_destroy(Render* render)
+{
+    vkDeviceWaitIdle(render->vulkan_context.device);
+
+    destroy_swapchain_context(render);
+
+    for (uint32_t frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
+    {
+        FrameContext* frame = &render->frame_context_array[frame_index];
+
+        vkDestroyFence(render->vulkan_context.device, frame->in_flight, nullptr);
+        vkDestroySemaphore(render->vulkan_context.device, frame->image_available, nullptr);
+        vkDestroySemaphore(render->vulkan_context.device, frame->render_finished, nullptr);
+    }
+
+    vkDestroyPipeline(render->vulkan_context.device, render->voxel_pipeline.pipeline, nullptr);
+    vkDestroyPipelineLayout(render->vulkan_context.device, render->voxel_pipeline.layout, nullptr);
+    vkDestroyRenderPass(render->vulkan_context.device, render->voxel_pipeline.render_pass, nullptr);
+
+    vkDestroyCommandPool(render->vulkan_context.device, render->vulkan_context.command_pool, nullptr);
+    vkDestroyDevice(render->vulkan_context.device, nullptr);
+    vkDestroySurfaceKHR(render->vulkan_context.instance, render->vulkan_context.surface, nullptr);
+    vkDestroyInstance(render->vulkan_context.instance, nullptr);
+}
+
+void render_frame(Render* render)
+{
+    FrameContext* frame_context = &render->frame_context_array[render->frame_index];
+
+    vkWaitForFences(
+        render->vulkan_context.device, 
+        1, 
+        &frame_context->in_flight, 
+        VK_TRUE, 
+        UINT64_MAX
+    );
+
+    uint32_t image_index;
+
+    vkAcquireNextImageKHR(
+        render->vulkan_context.device, 
+        render->swapchain_context.swapchain, 
+        UINT64_MAX, 
+        frame_context->image_available, 
+        VK_NULL_HANDLE, 
+        &image_index
+    );
+
+    vkResetFences(render->vulkan_context.device, 1, &frame_context->in_flight);
+    vkResetCommandBuffer(frame_context->command_buffer, 0);
+
+    record_command_buffer(render, frame_context->command_buffer, image_index);
+
+    VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    VkSubmitInfo submit_info = {};
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = &frame_context->image_available;
+    submit_info.pWaitDstStageMask = wait_stage_array;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &frame_context->command_buffer;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &frame_context->render_finished;
+
+    vkQueueSubmit(
+        render->vulkan_context.graphics_queue,
+        1,
+        &submit_info,
+        frame_context->in_flight
+    );
+
+    VkPresentInfoKHR present_info = {};
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &frame_context->render_finished;
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &render->swapchain_context.swapchain;
+    present_info.pImageIndices = &image_index;
+
+    vkQueuePresentKHR(render->vulkan_context.present_queue, &present_info);
+
+    render->frame_index = (render->frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
 void create_swapchain_context(Render* render)
 {
     create_swapchain(render);
@@ -34,105 +118,8 @@ void create_voxel_pipeline(Render* render)
     create_graphics_pipeline(render);
 }
 
-void render_destroy(Render* render)
-{
-    vkDeviceWaitIdle(render->vulkan_context.device);
-
-    // -----------------------------
-    // Swapchain lifetime
-    // -----------------------------
-    destroy_swapchain_context(render);
-
-    // -----------------------------
-    // Frame lifetime
-    // -----------------------------
-    for (size_t i = 0; i < render->frame_context_vec.size(); ++i)
-    {
-        FrameContext& frame = render->frame_context_vec[i];
-
-        vkDestroyFence(render->vulkan_context.device, frame.in_flight, nullptr);
-        vkDestroySemaphore(render->vulkan_context.device, frame.image_available, nullptr);
-        vkDestroySemaphore(render->vulkan_context.device, frame.render_finished, nullptr);
-    }
-
-    // -----------------------------
-    // Pipeline
-    // -----------------------------
-    vkDestroyPipeline(render->vulkan_context.device, render->voxel_pipeline.pipeline, nullptr);
-    vkDestroyPipelineLayout(render->vulkan_context.device, render->voxel_pipeline.layout, nullptr);
-    vkDestroyRenderPass(render->vulkan_context.device, render->voxel_pipeline.render_pass, nullptr);
-
-    // -----------------------------
-    // Device lifetime
-    // -----------------------------
-    vkDestroyCommandPool(render->vulkan_context.device, render->vulkan_context.command_pool, nullptr);
-    vkDestroyDevice(render->vulkan_context.device, nullptr);
-    vkDestroySurfaceKHR(render->vulkan_context.instance, render->vulkan_context.surface, nullptr);
-    vkDestroyInstance(render->vulkan_context.instance, nullptr);
-}
-
-void render_frame(Render* render)
-{
-    FrameContext& frame_context = render->frame_context_vec[render->current_frame];
-
-    vkWaitForFences(
-        render->vulkan_context.device, 
-        1, 
-        &frame_context.in_flight, 
-        VK_TRUE, 
-        UINT64_MAX
-    );
-
-    uint32_t image_index;
-
-    vkAcquireNextImageKHR(
-        render->vulkan_context.device, 
-        render->swapchain_context.swapchain, 
-        UINT64_MAX, 
-        frame_context.image_available, 
-        VK_NULL_HANDLE, 
-        &image_index
-    );
-
-    vkResetFences(render->vulkan_context.device, 1, &frame_context.in_flight);
-    vkResetCommandBuffer(frame_context.command_buffer, 0);
-
-    record_command_buffer(render, frame_context.command_buffer, image_index);
-
-    VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    VkSubmitInfo submit_info = {};
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &frame_context.image_available;
-    submit_info.pWaitDstStageMask = wait_stage_array;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &frame_context.command_buffer;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &frame_context.render_finished;
-
-    vkQueueSubmit(
-        render->vulkan_context.graphics_queue,
-        1,
-        &submit_info,
-        frame_context.in_flight
-    );
-
-    VkPresentInfoKHR present_info = {};
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = &frame_context.render_finished;
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = &render->swapchain_context.swapchain;
-    present_info.pImageIndices = &image_index;
-
-    vkQueuePresentKHR(render->vulkan_context.present_queue, &present_info);
-
-    render->current_frame = (render->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
-}
-
 void create_frame_contexts(Render *render)
 {
-    render->frame_context_vec.resize(MAX_FRAMES_IN_FLIGHT);
-
     VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
     command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     command_buffer_allocate_info.commandPool = render->vulkan_context.command_pool;
@@ -147,9 +134,9 @@ void create_frame_contexts(Render *render)
         command_buffer_vec.data()
     );
 
-    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    for (uint32_t frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
-        render->frame_context_vec[i].command_buffer = command_buffer_vec[i];
+        render->frame_context_array[frame_index].command_buffer = command_buffer_vec[frame_index];
     }
 
     VkSemaphoreCreateInfo semaphore_create_info = {};
@@ -159,9 +146,9 @@ void create_frame_contexts(Render *render)
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    for (uint32_t frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
-        FrameContext* frame_context = &render->frame_context_vec[i];
+        FrameContext* frame_context = &render->frame_context_array[frame_index];
 
         vkCreateSemaphore(
             render->vulkan_context.device, 
@@ -315,7 +302,6 @@ void create_swapchain(Render* render)
     VkSwapchainCreateInfoKHR instance_create_info = {};
     instance_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     instance_create_info.surface = render->vulkan_context.surface;
-    instance_create_info.minImageCount = surface_capabilities.minImageCount + 1;
     instance_create_info.imageFormat = format.format;
     instance_create_info.imageColorSpace = format.colorSpace;
     instance_create_info.imageExtent = render->swapchain_context.extent;
@@ -327,27 +313,41 @@ void create_swapchain(Render* render)
     instance_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
     instance_create_info.clipped = VK_TRUE;
 
+    uint32_t min_image_count = surface_capabilities.minImageCount + 1;
+
+    if (
+        surface_capabilities.maxImageCount > 0 &&
+        min_image_count > surface_capabilities.maxImageCount
+    ) {
+        min_image_count = surface_capabilities.maxImageCount;
+    }
+
+    instance_create_info.minImageCount = min_image_count;
+
     if (vkCreateSwapchainKHR(render->vulkan_context.device, &instance_create_info, nullptr, &render->swapchain_context.swapchain) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create swapchain");
     }
 
-    uint32_t image_count;
+    uint32_t image_count = 0;
     vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, nullptr);
+    
+    render->swapchain_context.image_array = (VkImage*)malloc(sizeof(VkImage) * image_count);
+    render->swapchain_context.image_view_array = (VkImageView*)malloc(sizeof(VkImageView) * image_count);
+    render->swapchain_context.framebuffer_array = (VkFramebuffer*)malloc(sizeof(VkFramebuffer) * image_count);
 
-    render->swapchain_context.image_vec.resize(image_count);
-    vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, render->swapchain_context.image_vec.data());
+    render->swapchain_context.image_count = image_count;
+
+    vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, render->swapchain_context.image_array);
 }
 
 void create_image_views(Render* render)
 {
-    render->swapchain_context.image_view_vec.resize(render->swapchain_context.image_vec.size());
-
-    for (size_t i = 0; i < render->swapchain_context.image_view_vec.size(); ++i)
+    for (uint32_t image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         VkImageViewCreateInfo image_view_create_info = {};
         image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        image_view_create_info.image = render->swapchain_context.image_vec[i];
+        image_view_create_info.image = render->swapchain_context.image_array[image_index];
         image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
         image_view_create_info.format = render->swapchain_context.format;
         image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -358,7 +358,7 @@ void create_image_views(Render* render)
             render->vulkan_context.device, 
             &image_view_create_info, 
             nullptr, 
-            &render->swapchain_context.image_view_vec[i]
+            &render->swapchain_context.image_view_array[image_index]
         );
     }
 }
@@ -550,15 +550,13 @@ void create_graphics_pipeline(Render* render)
 
 void create_frame_buffers(Render* render)
 {
-    render->swapchain_context.framebuffer_vec.resize(render->swapchain_context.image_vec.size());
-
-    for (size_t i = 0; i < render->swapchain_context.image_vec.size(); ++i)
+    for (uint32_t image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         VkFramebufferCreateInfo framebuffer_create_info = {};
         framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebuffer_create_info.renderPass = render->voxel_pipeline.render_pass;
         framebuffer_create_info.attachmentCount = 1;
-        framebuffer_create_info.pAttachments = &render->swapchain_context.image_view_vec[i];
+        framebuffer_create_info.pAttachments = &render->swapchain_context.image_view_array[image_index];
         framebuffer_create_info.width = render->swapchain_context.extent.width;
         framebuffer_create_info.height = render->swapchain_context.extent.height;
         framebuffer_create_info.layers = 1;
@@ -567,7 +565,7 @@ void create_frame_buffers(Render* render)
             render->vulkan_context.device, 
             &framebuffer_create_info, 
             nullptr, 
-            &render->swapchain_context.framebuffer_vec[i]
+            &render->swapchain_context.framebuffer_array[image_index]
         );
     }
 }
@@ -583,10 +581,10 @@ void create_command_pool(Render* render)
 
 void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32_t image_index)
 {
-    VkCommandBufferBeginInfo begin_info = {};
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    VkCommandBufferBeginInfo command_buffer_info = {};
+    command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    vkBeginCommandBuffer(command_buffer, &begin_info);
+    vkBeginCommandBuffer(command_buffer, &command_buffer_info);
 
     VkClearValue clear_color = {};
     clear_color.color = {{0.1f, 0.1f, 0.2f, 1.0f}};
@@ -594,7 +592,7 @@ void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint3
     VkRenderPassBeginInfo render_pass_info = {};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = render->voxel_pipeline.render_pass;
-    render_pass_info.framebuffer = render->swapchain_context.framebuffer_vec[image_index];
+    render_pass_info.framebuffer = render->swapchain_context.framebuffer_array[image_index];
     render_pass_info.renderArea.offset = {0, 0};
     render_pass_info.renderArea.extent = render->swapchain_context.extent;
     render_pass_info.clearValueCount = 1;
@@ -615,23 +613,27 @@ void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint3
 
 void destroy_swapchain_context(Render* render)
 {
-    for (size_t i = 0; i < render->swapchain_context.framebuffer_vec.size(); ++i)
+    for (uint32_t image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         vkDestroyFramebuffer(
             render->vulkan_context.device,
-            render->swapchain_context.framebuffer_vec[i],
+            render->swapchain_context.framebuffer_array[image_index],
             nullptr
         );
     }
 
-    for (size_t i = 0; i < render->swapchain_context.image_view_vec.size(); ++i)
+    for (uint32_t image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         vkDestroyImageView(
             render->vulkan_context.device,
-            render->swapchain_context.image_view_vec[i],
+            render->swapchain_context.image_view_array[image_index],
             nullptr
         );
     }
+
+    free(render->swapchain_context.image_array);
+    free(render->swapchain_context.image_view_array);
+    free(render->swapchain_context.framebuffer_array);
 
     vkDestroySwapchainKHR(
         render->vulkan_context.device,

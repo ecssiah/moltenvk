@@ -2,7 +2,6 @@
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
-#include <vector>
 
 #include "pipeline.h"
 #include "vulkan_context.h"
@@ -19,12 +18,9 @@ struct Render
     
     SwapchainContext swapchain_context;
 
-    std::vector<FrameContext> frame_context_vec;
-    uint32_t current_frame = 0;
+    uint32_t frame_index = 0;
+    FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
 
-    // ------------------------------------------------------------
-    // Pipeline (swapchain dependent for now)
-    // ------------------------------------------------------------
     Pipeline voxel_pipeline;
 };
 
@@ -52,4 +48,3 @@ void create_frame_buffers(Render* render);
 
 void create_command_pool(Render* render);
 void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32_t image_index);
-
