@@ -36,7 +36,7 @@ void create_voxel_pipeline(Render* render)
 
 void render_destroy(Render* render)
 {
-    vkDeviceWaitIdle(render->device);
+    vkDeviceWaitIdle(render->vulkan_context.device);
 
     // -----------------------------
     // Swapchain lifetime
@@ -50,25 +50,25 @@ void render_destroy(Render* render)
     {
         FrameContext& frame = render->frame_context_vec[i];
 
-        vkDestroyFence(render->device, frame.in_flight, nullptr);
-        vkDestroySemaphore(render->device, frame.image_available, nullptr);
-        vkDestroySemaphore(render->device, frame.render_finished, nullptr);
+        vkDestroyFence(render->vulkan_context.device, frame.in_flight, nullptr);
+        vkDestroySemaphore(render->vulkan_context.device, frame.image_available, nullptr);
+        vkDestroySemaphore(render->vulkan_context.device, frame.render_finished, nullptr);
     }
 
     // -----------------------------
     // Pipeline
     // -----------------------------
-    vkDestroyPipeline(render->device, render->graphics_pipeline, nullptr);
-    vkDestroyPipelineLayout(render->device, render->pipeline_layout, nullptr);
-    vkDestroyRenderPass(render->device, render->render_pass, nullptr);
+    vkDestroyPipeline(render->vulkan_context.device, render->voxel_pipeline.pipeline, nullptr);
+    vkDestroyPipelineLayout(render->vulkan_context.device, render->voxel_pipeline.layout, nullptr);
+    vkDestroyRenderPass(render->vulkan_context.device, render->voxel_pipeline.render_pass, nullptr);
 
     // -----------------------------
     // Device lifetime
     // -----------------------------
-    vkDestroyCommandPool(render->device, render->command_pool, nullptr);
-    vkDestroyDevice(render->device, nullptr);
-    vkDestroySurfaceKHR(render->instance, render->surface, nullptr);
-    vkDestroyInstance(render->instance, nullptr);
+    vkDestroyCommandPool(render->vulkan_context.device, render->vulkan_context.command_pool, nullptr);
+    vkDestroyDevice(render->vulkan_context.device, nullptr);
+    vkDestroySurfaceKHR(render->vulkan_context.instance, render->vulkan_context.surface, nullptr);
+    vkDestroyInstance(render->vulkan_context.instance, nullptr);
 }
 
 void render_frame(Render* render)
@@ -76,7 +76,7 @@ void render_frame(Render* render)
     FrameContext& frame_context = render->frame_context_vec[render->current_frame];
 
     vkWaitForFences(
-        render->device, 
+        render->vulkan_context.device, 
         1, 
         &frame_context.in_flight, 
         VK_TRUE, 
@@ -86,7 +86,7 @@ void render_frame(Render* render)
     uint32_t image_index;
 
     vkAcquireNextImageKHR(
-        render->device, 
+        render->vulkan_context.device, 
         render->swapchain_context.swapchain, 
         UINT64_MAX, 
         frame_context.image_available, 
@@ -94,7 +94,7 @@ void render_frame(Render* render)
         &image_index
     );
 
-    vkResetFences(render->device, 1, &frame_context.in_flight);
+    vkResetFences(render->vulkan_context.device, 1, &frame_context.in_flight);
     vkResetCommandBuffer(frame_context.command_buffer, 0);
 
     record_command_buffer(render, frame_context.command_buffer, image_index);
@@ -111,7 +111,7 @@ void render_frame(Render* render)
     submit_info.pSignalSemaphores = &frame_context.render_finished;
 
     vkQueueSubmit(
-        render->graphics_queue,
+        render->vulkan_context.graphics_queue,
         1,
         &submit_info,
         frame_context.in_flight
@@ -124,7 +124,7 @@ void render_frame(Render* render)
     present_info.pSwapchains = &render->swapchain_context.swapchain;
     present_info.pImageIndices = &image_index;
 
-    vkQueuePresentKHR(render->present_queue, &present_info);
+    vkQueuePresentKHR(render->vulkan_context.present_queue, &present_info);
 
     render->current_frame = (render->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
@@ -135,14 +135,14 @@ void create_frame_contexts(Render *render)
 
     VkCommandBufferAllocateInfo command_buffer_allocate_info = {};
     command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    command_buffer_allocate_info.commandPool = render->command_pool;
+    command_buffer_allocate_info.commandPool = render->vulkan_context.command_pool;
     command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     command_buffer_allocate_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
     std::vector<VkCommandBuffer> command_buffer_vec(MAX_FRAMES_IN_FLIGHT);
 
     vkAllocateCommandBuffers(
-        render->device, 
+        render->vulkan_context.device, 
         &command_buffer_allocate_info, 
         command_buffer_vec.data()
     );
@@ -164,21 +164,21 @@ void create_frame_contexts(Render *render)
         FrameContext* frame_context = &render->frame_context_vec[i];
 
         vkCreateSemaphore(
-            render->device, 
+            render->vulkan_context.device, 
             &semaphore_create_info, 
             nullptr, 
             &frame_context->image_available
         );
 
         vkCreateSemaphore(
-            render->device, 
+            render->vulkan_context.device, 
             &semaphore_create_info, 
             nullptr, 
             &frame_context->render_finished
         );
 
         vkCreateFence(
-            render->device, 
+            render->vulkan_context.device, 
             &fence_create_info, 
             nullptr, 
             &frame_context->in_flight
@@ -209,8 +209,13 @@ void create_instance(Render* render)
     instance_create_info.enabledExtensionCount = static_cast<uint32_t>(required_extension_vec.size());
     instance_create_info.ppEnabledExtensionNames = required_extension_vec.data();
 
-    if (vkCreateInstance(&instance_create_info, nullptr, &render->instance) != VK_SUCCESS)
-    {
+    if (
+        vkCreateInstance(
+            &instance_create_info, 
+            nullptr, 
+            &render->vulkan_context.instance
+        ) != VK_SUCCESS
+    ) {
         throw std::runtime_error("Failed to create instance");
     }
 }
@@ -219,10 +224,10 @@ void create_surface(Render* render, GLFWwindow* window)
 {
     if (
         glfwCreateWindowSurface(
-            render->instance, 
+            render->vulkan_context.instance, 
             window, 
             nullptr, 
-            &render->surface
+            &render->vulkan_context.surface
         ) != VK_SUCCESS
     ) {
         throw std::runtime_error("Failed to create surface");
@@ -232,10 +237,10 @@ void create_surface(Render* render, GLFWwindow* window)
 void pick_physical_device(Render* render)
 {
     uint32_t device_count = 0;
-    vkEnumeratePhysicalDevices(render->instance, &device_count, nullptr);
+    vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, nullptr);
 
     std::vector<VkPhysicalDevice> device_vec(device_count);
-    vkEnumeratePhysicalDevices(render->instance, &device_count, device_vec.data());
+    vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, device_vec.data());
 
     for (VkPhysicalDevice_T* device : device_vec)
     {
@@ -248,12 +253,12 @@ void pick_physical_device(Render* render)
         for (uint32_t i = 0; i < queue_family_count; ++i)
         {
             VkBool32 present_support = VK_FALSE;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, render->surface, &present_support);
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, render->vulkan_context.surface, &present_support);
 
             if ((queue_family_vec[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && present_support)
             {
-                render->physical_device = device;
-                render->graphics_queue_familiy_index = i;
+                render->vulkan_context.physical_device = device;
+                render->vulkan_context.graphics_queue_family_index = i;
 
                 return;
             }
@@ -269,7 +274,7 @@ void create_logical_device(Render* render)
 
     VkDeviceQueueCreateInfo device_queue_info = {};
     device_queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    device_queue_info.queueFamilyIndex = render->graphics_queue_familiy_index;
+    device_queue_info.queueFamilyIndex = render->vulkan_context.graphics_queue_family_index;
     device_queue_info.queueCount = 1;
     device_queue_info.pQueuePriorities = &priority;
 
@@ -282,26 +287,26 @@ void create_logical_device(Render* render)
     instance_create_info.enabledExtensionCount = 1;
     instance_create_info.ppEnabledExtensionNames = extension_array;
 
-    if (vkCreateDevice(render->physical_device, &instance_create_info, nullptr, &render->device) != VK_SUCCESS)
+    if (vkCreateDevice(render->vulkan_context.physical_device, &instance_create_info, nullptr, &render->vulkan_context.device) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create device");
     }
 
-    vkGetDeviceQueue(render->device, render->graphics_queue_familiy_index, 0, &render->graphics_queue);
+    vkGetDeviceQueue(render->vulkan_context.device, render->vulkan_context.graphics_queue_family_index, 0, &render->vulkan_context.graphics_queue);
 
-    render->present_queue = render->graphics_queue;
+    render->vulkan_context.present_queue = render->vulkan_context.graphics_queue;
 }
 
 void create_swapchain(Render* render)
 {
     VkSurfaceCapabilitiesKHR surface_capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(render->physical_device, render->surface, &surface_capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &surface_capabilities);
 
     uint32_t format_count;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(render->physical_device, render->surface, &format_count, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &format_count, nullptr);
 
     std::vector<VkSurfaceFormatKHR> format_vec(format_count);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(render->physical_device, render->surface, &format_count, format_vec.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &format_count, format_vec.data());
 
     VkSurfaceFormatKHR format = format_vec[0];
     render->swapchain_context.format = format.format;
@@ -309,7 +314,7 @@ void create_swapchain(Render* render)
 
     VkSwapchainCreateInfoKHR instance_create_info = {};
     instance_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    instance_create_info.surface = render->surface;
+    instance_create_info.surface = render->vulkan_context.surface;
     instance_create_info.minImageCount = surface_capabilities.minImageCount + 1;
     instance_create_info.imageFormat = format.format;
     instance_create_info.imageColorSpace = format.colorSpace;
@@ -322,16 +327,16 @@ void create_swapchain(Render* render)
     instance_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
     instance_create_info.clipped = VK_TRUE;
 
-    if (vkCreateSwapchainKHR(render->device, &instance_create_info, nullptr, &render->swapchain_context.swapchain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(render->vulkan_context.device, &instance_create_info, nullptr, &render->swapchain_context.swapchain) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create swapchain");
     }
 
     uint32_t image_count;
-    vkGetSwapchainImagesKHR(render->device, render->swapchain_context.swapchain, &image_count, nullptr);
+    vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, nullptr);
 
     render->swapchain_context.image_vec.resize(image_count);
-    vkGetSwapchainImagesKHR(render->device, render->swapchain_context.swapchain, &image_count, render->swapchain_context.image_vec.data());
+    vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, render->swapchain_context.image_vec.data());
 }
 
 void create_image_views(Render* render)
@@ -350,7 +355,7 @@ void create_image_views(Render* render)
         image_view_create_info.subresourceRange.layerCount = 1;
 
         vkCreateImageView(
-            render->device, 
+            render->vulkan_context.device, 
             &image_view_create_info, 
             nullptr, 
             &render->swapchain_context.image_view_vec[i]
@@ -384,23 +389,31 @@ void create_render_pass(Render* render)
     render_pass_create_info.subpassCount = 1;
     render_pass_create_info.pSubpasses = &subpass_description;
 
-    vkCreateRenderPass(render->device, &render_pass_create_info, nullptr, &render->render_pass);
+    vkCreateRenderPass(
+        render->vulkan_context.device, 
+        &render_pass_create_info, 
+        nullptr, 
+        &render->voxel_pipeline.render_pass
+    );
 }
 
 std::vector<char> read_file(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
-    if (!file.is_open())
-        throw std::runtime_error("failed to open shader file");
 
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("failed to open shader file");
+    }
+
+    size_t file_size = (size_t)file.tellg();
+    std::vector<char> buffer_vec(file_size);
 
     file.seekg(0);
-    file.read(buffer.data(), fileSize);
+    file.read(buffer_vec.data(), file_size);
     file.close();
 
-    return buffer;
+    return buffer_vec;
 }
 
 VkShaderModule create_shader_module(VkDevice device, const std::vector<char>& code)
@@ -424,8 +437,8 @@ void create_graphics_pipeline(Render* render)
     std::vector<char> vert_shader_code = read_file("shaders/bin/test.vert.spv");
     std::vector<char> frag_shader_code = read_file("shaders/bin/test.frag.spv");
 
-    VkShaderModule vert_module = create_shader_module(render->device, vert_shader_code);
-    VkShaderModule frag_module = create_shader_module(render->device, frag_shader_code);
+    VkShaderModule vert_module = create_shader_module(render->vulkan_context.device, vert_shader_code);
+    VkShaderModule frag_module = create_shader_module(render->vulkan_context.device, frag_shader_code);
 
     VkPipelineShaderStageCreateInfo vert_stage = {};
     vert_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -495,10 +508,10 @@ void create_graphics_pipeline(Render* render)
 
     if (
         vkCreatePipelineLayout(
-            render->device, 
+            render->vulkan_context.device, 
             &pipeline_layout_info, 
-            nullptr, 
-            &render->pipeline_layout
+            nullptr,
+            &render->voxel_pipeline.layout
         ) != VK_SUCCESS
     ) {
         throw std::runtime_error("failed to create pipeline layout");
@@ -514,25 +527,25 @@ void create_graphics_pipeline(Render* render)
     pipeline_info.pRasterizationState = &rasterizer;
     pipeline_info.pMultisampleState = &multisampling;
     pipeline_info.pColorBlendState = &color_blending;
-    pipeline_info.layout = render->pipeline_layout;
-    pipeline_info.renderPass = render->render_pass;
+    pipeline_info.layout = render->voxel_pipeline.layout;
+    pipeline_info.renderPass = render->voxel_pipeline.render_pass;
     pipeline_info.subpass = 0;
 
     if (
         vkCreateGraphicsPipelines(
-            render->device, 
+            render->vulkan_context.device, 
             VK_NULL_HANDLE, 
             1, 
             &pipeline_info, 
             nullptr, 
-            &render->graphics_pipeline
+            &render->voxel_pipeline.pipeline
         ) != VK_SUCCESS
     ) {
         throw std::runtime_error("failed to create graphics pipeline");
     }
 
-    vkDestroyShaderModule(render->device, frag_module, nullptr);
-    vkDestroyShaderModule(render->device, vert_module, nullptr);
+    vkDestroyShaderModule(render->vulkan_context.device, frag_module, nullptr);
+    vkDestroyShaderModule(render->vulkan_context.device, vert_module, nullptr);
 }
 
 void create_frame_buffers(Render* render)
@@ -543,7 +556,7 @@ void create_frame_buffers(Render* render)
     {
         VkFramebufferCreateInfo framebuffer_create_info = {};
         framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebuffer_create_info.renderPass = render->render_pass;
+        framebuffer_create_info.renderPass = render->voxel_pipeline.render_pass;
         framebuffer_create_info.attachmentCount = 1;
         framebuffer_create_info.pAttachments = &render->swapchain_context.image_view_vec[i];
         framebuffer_create_info.width = render->swapchain_context.extent.width;
@@ -551,7 +564,7 @@ void create_frame_buffers(Render* render)
         framebuffer_create_info.layers = 1;
 
         vkCreateFramebuffer(
-            render->device, 
+            render->vulkan_context.device, 
             &framebuffer_create_info, 
             nullptr, 
             &render->swapchain_context.framebuffer_vec[i]
@@ -563,9 +576,9 @@ void create_command_pool(Render* render)
 {
     VkCommandPoolCreateInfo command_pool_create_info = {};
     command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    command_pool_create_info.queueFamilyIndex = render->graphics_queue_familiy_index;
+    command_pool_create_info.queueFamilyIndex = render->vulkan_context.graphics_queue_family_index;
 
-    vkCreateCommandPool(render->device, &command_pool_create_info, nullptr, &render->command_pool);
+    vkCreateCommandPool(render->vulkan_context.device, &command_pool_create_info, nullptr, &render->vulkan_context.command_pool);
 }
 
 void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32_t image_index)
@@ -580,7 +593,7 @@ void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint3
 
     VkRenderPassBeginInfo render_pass_info = {};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_info.renderPass = render->render_pass;
+    render_pass_info.renderPass = render->voxel_pipeline.render_pass;
     render_pass_info.framebuffer = render->swapchain_context.framebuffer_vec[image_index];
     render_pass_info.renderArea.offset = {0, 0};
     render_pass_info.renderArea.extent = render->swapchain_context.extent;
@@ -593,7 +606,7 @@ void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint3
         VK_SUBPASS_CONTENTS_INLINE
     );
 
-    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->graphics_pipeline);
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->voxel_pipeline.pipeline);
     vkCmdDraw(command_buffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(command_buffer);
@@ -605,7 +618,7 @@ void destroy_swapchain_context(Render* render)
     for (size_t i = 0; i < render->swapchain_context.framebuffer_vec.size(); ++i)
     {
         vkDestroyFramebuffer(
-            render->device,
+            render->vulkan_context.device,
             render->swapchain_context.framebuffer_vec[i],
             nullptr
         );
@@ -614,14 +627,14 @@ void destroy_swapchain_context(Render* render)
     for (size_t i = 0; i < render->swapchain_context.image_view_vec.size(); ++i)
     {
         vkDestroyImageView(
-            render->device,
+            render->vulkan_context.device,
             render->swapchain_context.image_view_vec[i],
             nullptr
         );
     }
 
     vkDestroySwapchainKHR(
-        render->device,
+        render->vulkan_context.device,
         render->swapchain_context.swapchain,
         nullptr
     );

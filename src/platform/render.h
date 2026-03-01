@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
+#include "pipeline.h"
+#include "vulkan_context.h"
 #include "frame_context.h"
 #include "swapchain_context.h"
 
@@ -11,42 +13,19 @@ static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 struct Render
 {
-    // ------------------------------------------------------------
-    // Platform
-    // ------------------------------------------------------------
     GLFWwindow* window = nullptr;
+    
+    VulkanContext vulkan_context;
+    
+    SwapchainContext swapchain_context;
 
-    // ------------------------------------------------------------
-    // Frame contexts (per-frame in flight resources)
-    // ------------------------------------------------------------
     std::vector<FrameContext> frame_context_vec;
     uint32_t current_frame = 0;
 
     // ------------------------------------------------------------
-    // Device lifetime (destroyed only at shutdown)
-    // ------------------------------------------------------------
-    VkInstance instance = VK_NULL_HANDLE;
-    VkSurfaceKHR surface = VK_NULL_HANDLE;
-    VkPhysicalDevice physical_device = VK_NULL_HANDLE;
-    VkDevice device = VK_NULL_HANDLE;
-
-    VkQueue graphics_queue = VK_NULL_HANDLE;
-    VkQueue present_queue = VK_NULL_HANDLE;
-    uint32_t graphics_queue_familiy_index = UINT32_MAX;
-
-    VkCommandPool command_pool = VK_NULL_HANDLE;
-
-    // ------------------------------------------------------------
-    // Swapchain lifetime (destroyed on resize)
-    // ------------------------------------------------------------
-    SwapchainContext swapchain_context;
-
-    // ------------------------------------------------------------
     // Pipeline (swapchain dependent for now)
     // ------------------------------------------------------------
-    VkRenderPass render_pass = VK_NULL_HANDLE;
-    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
-    VkPipeline graphics_pipeline = VK_NULL_HANDLE;
+    Pipeline voxel_pipeline;
 };
 
 void render_init(Render* render);

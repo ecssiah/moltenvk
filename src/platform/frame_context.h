@@ -4,8 +4,8 @@
 
 struct FrameContext 
 {
-    VkCommandBuffer command_buffer;
-    VkSemaphore image_available;
-    VkSemaphore render_finished;
-    VkFence in_flight;
+    VkCommandBuffer command_buffer = {};
+    VkSemaphore image_available = {};
+    VkSemaphore render_finished = {};
+    VkFence in_flight = {};
 };
