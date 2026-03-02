@@ -27,6 +27,11 @@ void app_start(App* app)
     {
         glfwPollEvents();
 
+        if (glfwGetKey(app->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            glfwSetWindowShouldClose(app->window, GLFW_TRUE);
+        }
+
         render_frame(&app->render);
     }
 }

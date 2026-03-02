@@ -73,8 +73,6 @@ void render_frame(Render* render)
         &image_index
     );
 
-
-
     vkResetFences(render->vulkan_context.device, 1, &frame_context->in_flight);
     vkResetCommandBuffer(frame_context->command_buffer, 0);
 
@@ -139,12 +137,6 @@ void create_frame_contexts(Render* render)
         command_buffer_array
     );
 
-    uint32 frame_index;
-    for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
-    {
-        render->frame_context_array[frame_index].command_buffer = command_buffer_array[frame_index];
-    }
-
     VkSemaphoreCreateInfo semaphore_create_info = {0};
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -152,9 +144,12 @@ void create_frame_contexts(Render* render)
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
+    uint32 frame_index;
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
         FrameContext* frame_context = &render->frame_context_array[frame_index];
+        
+        frame_context->command_buffer = command_buffer_array[frame_index];
 
         vkCreateSemaphore(
             render->vulkan_context.device, 
