@@ -1,5 +1,6 @@
 #include "render.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,7 @@ void r_quit(Render* render)
 
     r_destroy_swapchain_context(render);
 
-    uint32 frame_index;
+    u32 frame_index;
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
         FrameContext* frame = &render->frame_context_array[frame_index];
@@ -59,7 +60,7 @@ void r_render(Render* render)
         UINT64_MAX
     );
 
-    uint32 image_index;
+    u32 image_index;
 
     vkAcquireNextImageKHR(
         render->vulkan_context.device, 
@@ -77,7 +78,9 @@ void r_render(Render* render)
 
     VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    VkSubmitInfo submit_info = {0};
+    VkSubmitInfo submit_info;
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.pNext = NULL;
     submit_info.waitSemaphoreCount = 1;
     submit_info.pWaitSemaphores = &frame_context->image_available;
     submit_info.pWaitDstStageMask = wait_stage_array;
@@ -93,12 +96,15 @@ void r_render(Render* render)
         frame_context->in_flight
     );
 
-    VkPresentInfoKHR present_info = {0};
+    VkPresentInfoKHR present_info;
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.pNext = NULL;
     present_info.waitSemaphoreCount = 1;
     present_info.pWaitSemaphores = &frame_context->render_finished;
     present_info.swapchainCount = 1;
     present_info.pSwapchains = &render->swapchain_context.swapchain;
     present_info.pImageIndices = &image_index;
+    present_info.pResults = NULL;
 
     vkQueuePresentKHR(render->vulkan_context.present_queue, &present_info);
 
@@ -120,8 +126,9 @@ void r_create_voxel_pipeline(Render* render)
 
 void r_create_frame_contexts(Render* render)
 {
-    VkCommandBufferAllocateInfo command_buffer_allocate_info = {0};
+    VkCommandBufferAllocateInfo command_buffer_allocate_info;
     command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_allocate_info.pNext = NULL;
     command_buffer_allocate_info.commandPool = render->vulkan_context.command_pool;
     command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     command_buffer_allocate_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
@@ -134,14 +141,17 @@ void r_create_frame_contexts(Render* render)
         command_buffer_array
     );
 
-    VkSemaphoreCreateInfo semaphore_create_info = {0};
+    VkSemaphoreCreateInfo semaphore_create_info;
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphore_create_info.pNext = NULL;
+    semaphore_create_info.flags = 0;
 
-    VkFenceCreateInfo fence_create_info = {0};
+    VkFenceCreateInfo fence_create_info;
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_create_info.pNext = NULL;
     fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    uint32 frame_index;
+    u32 frame_index;
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
         FrameContext* frame_context = &render->frame_context_array[frame_index];
@@ -173,11 +183,11 @@ void r_create_frame_contexts(Render* render)
 
 void r_create_instance(Render* render)
 {
-    uint32 extension_count = 0;
+    u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
     const char** required_extension_array = malloc(sizeof (const char*) * (extension_count + 1));
 
-    uint32 extension_index;
+    u32 extension_index;
     for (extension_index = 0; extension_index < extension_count; ++extension_index)
     {
         required_extension_array[extension_index] = extension_array[extension_index];
@@ -185,18 +195,22 @@ void r_create_instance(Render* render)
 
     required_extension_array[extension_count] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
 
-    VkApplicationInfo application_info = {0};
+    VkApplicationInfo application_info;
     application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    application_info.pNext = NULL;
     application_info.pApplicationName = "Vulkan Test";
-    application_info.applicationVersion = VK_MAKE_VERSION(1,0,0);
-    application_info.pEngineName = "No Engine";
-    application_info.engineVersion = VK_MAKE_VERSION(1,0,0);
+    application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    application_info.pEngineName = "Vulkan Test Engine";
+    application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     application_info.apiVersion = VK_API_VERSION_1_2;
 
-    VkInstanceCreateInfo instance_create_info = {0};
+    VkInstanceCreateInfo instance_create_info;
     instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.pApplicationInfo = &application_info;
+    instance_create_info.pNext = NULL;
     instance_create_info.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+    instance_create_info.pApplicationInfo = &application_info;
+    instance_create_info.enabledLayerCount = 0;
+    instance_create_info.ppEnabledLayerNames = NULL;
     instance_create_info.enabledExtensionCount = extension_count + 1;
     instance_create_info.ppEnabledExtensionNames = required_extension_array;
 
@@ -239,7 +253,7 @@ void r_create_surface(Render* render, GLFWwindow* window)
 
 void r_pick_physical_device(Render* render)
 {
-    uint32 device_count = 0;
+    u32 device_count = 0;
     vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, NULL);
 
     if (device_count == 0)
@@ -252,25 +266,43 @@ void r_pick_physical_device(Render* render)
     VkPhysicalDevice* physical_device_array = malloc(sizeof (VkPhysicalDevice) * device_count);
     vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, physical_device_array);
 
-    uint32 device_index;
+    u32 device_index;
     for (device_index = 0; device_index < device_count; ++device_index)
     {
         VkPhysicalDevice device = physical_device_array[device_index];
 
-        uint32 queue_family_count = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, NULL);
+        u32 queue_family_count = 0;
+
+        vkGetPhysicalDeviceQueueFamilyProperties(
+            device, 
+            &queue_family_count, 
+            NULL
+        );
 
         VkQueueFamilyProperties* queue_family_properties_array = malloc(sizeof (VkQueueFamilyProperties) * queue_family_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_family_properties_array);
 
-        uint32 queue_family_index;
+        vkGetPhysicalDeviceQueueFamilyProperties(
+            device, 
+            &queue_family_count, 
+            queue_family_properties_array
+        );
+
+        u32 queue_family_index;
         for (queue_family_index = 0; queue_family_index < queue_family_count; ++queue_family_index)
         {
             VkBool32 present_support = VK_FALSE;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, queue_family_index, render->vulkan_context.surface, &present_support);
 
-            if ((queue_family_properties_array[queue_family_index].queueFlags & VK_QUEUE_GRAPHICS_BIT) && present_support)
-            {
+            vkGetPhysicalDeviceSurfaceSupportKHR(
+                device, 
+                queue_family_index, 
+                render->vulkan_context.surface, 
+                &present_support
+            );
+
+            if (
+                (queue_family_properties_array[queue_family_index].queueFlags & VK_QUEUE_GRAPHICS_BIT) && 
+                present_support
+            ) {
                 render->vulkan_context.physical_device = device;
                 render->vulkan_context.graphics_queue_family_index = queue_family_index;
 
@@ -293,27 +325,34 @@ void r_pick_physical_device(Render* render)
 
 void r_create_logical_device(Render* render)
 {
-    float32 priority = 1.0f;
+    f32 queue_priority = 1.0f;
 
-    VkDeviceQueueCreateInfo device_queue_info = {0};
+    VkDeviceQueueCreateInfo device_queue_info;
     device_queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    device_queue_info.pNext = NULL;
+    device_queue_info.flags = 0;
     device_queue_info.queueFamilyIndex = render->vulkan_context.graphics_queue_family_index;
     device_queue_info.queueCount = 1;
-    device_queue_info.pQueuePriorities = &priority;
+    device_queue_info.pQueuePriorities = &queue_priority;
 
-    const char* extension_array[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    const char* extension_array[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-    VkDeviceCreateInfo instance_create_info = {0};
-    instance_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    instance_create_info.queueCreateInfoCount = 1;
-    instance_create_info.pQueueCreateInfos = &device_queue_info;
-    instance_create_info.enabledExtensionCount = 1;
-    instance_create_info.ppEnabledExtensionNames = extension_array;
+    VkDeviceCreateInfo device_info;
+    device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    device_info.pNext = NULL;
+    device_info.flags = 0;
+    device_info.queueCreateInfoCount = 1;
+    device_info.pQueueCreateInfos = &device_queue_info;
+    device_info.enabledLayerCount = 0;
+    device_info.ppEnabledLayerNames = NULL;
+    device_info.enabledExtensionCount = 1;
+    device_info.ppEnabledExtensionNames = extension_array;
+    device_info.pEnabledFeatures = NULL;
 
     VkResult device_result = 
         vkCreateDevice(
             render->vulkan_context.physical_device, 
-            &instance_create_info, 
+            &device_info, 
             NULL, 
             &render->vulkan_context.device
         );
@@ -325,7 +364,12 @@ void r_create_logical_device(Render* render)
         exit(EXIT_FAILURE);
     }
 
-    vkGetDeviceQueue(render->vulkan_context.device, render->vulkan_context.graphics_queue_family_index, 0, &render->vulkan_context.graphics_queue);
+    vkGetDeviceQueue(
+        render->vulkan_context.device, 
+        render->vulkan_context.graphics_queue_family_index, 
+        0, 
+        &render->vulkan_context.graphics_queue
+    );
 
     render->vulkan_context.present_queue = render->vulkan_context.graphics_queue;
 }
@@ -333,10 +377,21 @@ void r_create_logical_device(Render* render)
 void r_create_swapchain(Render* render)
 {
     VkSurfaceCapabilitiesKHR surface_capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &surface_capabilities);
 
-    uint32 format_count;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &format_count, NULL);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        render->vulkan_context.physical_device, 
+        render->vulkan_context.surface, 
+        &surface_capabilities
+    );
+
+    u32 format_count;
+
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        render->vulkan_context.physical_device, 
+        render->vulkan_context.surface, 
+        &format_count, 
+        NULL
+    );
 
     VkSurfaceFormatKHR* surface_format_array = malloc(sizeof (VkSurfaceFormatKHR) * format_count);
 
@@ -347,27 +402,33 @@ void r_create_swapchain(Render* render)
         surface_format_array
     );
 
-    VkSurfaceFormatKHR format = surface_format_array[0];
-    render->swapchain_context.format = format.format;
+    VkSurfaceFormatKHR surface_format = surface_format_array[0];
+    render->swapchain_context.format = surface_format.format;
     render->swapchain_context.extent = surface_capabilities.currentExtent;
 
     free(surface_format_array);
 
-    VkSwapchainCreateInfoKHR instance_create_info = {0};
+    VkSwapchainCreateInfoKHR instance_create_info;
     instance_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    instance_create_info.pNext = NULL;
+    instance_create_info.flags = 0;
     instance_create_info.surface = render->vulkan_context.surface;
-    instance_create_info.imageFormat = format.format;
-    instance_create_info.imageColorSpace = format.colorSpace;
+    instance_create_info.minImageCount = 0;
+    instance_create_info.imageFormat = surface_format.format;
+    instance_create_info.imageColorSpace = surface_format.colorSpace;
     instance_create_info.imageExtent = render->swapchain_context.extent;
     instance_create_info.imageArrayLayers = 1;
     instance_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     instance_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    instance_create_info.queueFamilyIndexCount = 0;
+    instance_create_info.pQueueFamilyIndices = NULL;
     instance_create_info.preTransform = surface_capabilities.currentTransform;
     instance_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     instance_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
     instance_create_info.clipped = VK_TRUE;
+    instance_create_info.oldSwapchain = NULL;
 
-    uint32 min_image_count = surface_capabilities.minImageCount + 1;
+    u32 min_image_count = surface_capabilities.minImageCount + 1;
 
     if (
         surface_capabilities.maxImageCount > 0 &&
@@ -393,8 +454,14 @@ void r_create_swapchain(Render* render)
         exit(EXIT_FAILURE);
     }
 
-    uint32 image_count = 0;
-    vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, NULL);
+    u32 image_count = 0;
+
+    vkGetSwapchainImagesKHR(
+        render->vulkan_context.device, 
+        render->swapchain_context.swapchain, 
+        &image_count, 
+        NULL
+    );
     
     render->swapchain_context.image_array = malloc(sizeof (VkImage) * image_count);
     render->swapchain_context.image_view_array = malloc(sizeof (VkImageView) * image_count);
@@ -402,22 +469,41 @@ void r_create_swapchain(Render* render)
 
     render->swapchain_context.image_count = image_count;
 
-    vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, render->swapchain_context.image_array);
+    vkGetSwapchainImagesKHR(
+        render->vulkan_context.device, 
+        render->swapchain_context.swapchain, 
+        &image_count, 
+        render->swapchain_context.image_array
+    );
 }
 
 void r_create_image_views(Render* render)
 {
-    uint32 image_index;
+    u32 image_index;
     for (image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
-        VkImageViewCreateInfo image_view_create_info = {0};
+        VkComponentMapping component_mapping;
+        component_mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        component_mapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        component_mapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        component_mapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        VkImageSubresourceRange image_subresource_range;
+        image_subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        image_subresource_range.baseMipLevel = 0;
+        image_subresource_range.levelCount = 1;
+        image_subresource_range.baseArrayLayer = 0;
+        image_subresource_range.layerCount = 1;
+
+        VkImageViewCreateInfo image_view_create_info;
         image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        image_view_create_info.pNext = NULL;
+        image_view_create_info.flags = 0;
         image_view_create_info.image = render->swapchain_context.image_array[image_index];
         image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
         image_view_create_info.format = render->swapchain_context.format;
-        image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        image_view_create_info.subresourceRange.levelCount = 1;
-        image_view_create_info.subresourceRange.layerCount = 1;
+        image_view_create_info.components = component_mapping;
+        image_view_create_info.subresourceRange = image_subresource_range;
 
         vkCreateImageView(
             render->vulkan_context.device, 
@@ -430,33 +516,47 @@ void r_create_image_views(Render* render)
 
 void r_create_render_pass(Render* render)
 {
-    VkAttachmentDescription color_attachment = {0};
+    VkAttachmentDescription color_attachment;
+    color_attachment.flags = 0;
     color_attachment.format = render->swapchain_context.format;
     color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    VkAttachmentReference attachment_reference = {0};
+    VkAttachmentReference attachment_reference;
     attachment_reference.attachment = 0;
     attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkSubpassDescription subpass_description = {0};
+    VkSubpassDescription subpass_description;
+    subpass_description.flags = 0;
     subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_description.inputAttachmentCount = 0;
+    subpass_description.pInputAttachments = NULL;
     subpass_description.colorAttachmentCount = 1;
     subpass_description.pColorAttachments = &attachment_reference;
+    subpass_description.pResolveAttachments = NULL;
+    subpass_description.pDepthStencilAttachment = NULL;
+    subpass_description.preserveAttachmentCount = 0;
+    subpass_description.pPreserveAttachments = NULL;
 
-    VkRenderPassCreateInfo render_pass_create_info = {0};
-    render_pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    render_pass_create_info.attachmentCount = 1;
-    render_pass_create_info.pAttachments = &color_attachment;
-    render_pass_create_info.subpassCount = 1;
-    render_pass_create_info.pSubpasses = &subpass_description;
+    VkRenderPassCreateInfo render_pass_info;
+    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    render_pass_info.pNext = NULL;
+    render_pass_info.flags = 0;
+    render_pass_info.attachmentCount = 1;
+    render_pass_info.pAttachments = &color_attachment;
+    render_pass_info.subpassCount = 1;
+    render_pass_info.pSubpasses = &subpass_description;
+    render_pass_info.dependencyCount = 0;
+    render_pass_info.pDependencies = NULL;
 
     vkCreateRenderPass(
         render->vulkan_context.device, 
-        &render_pass_create_info, 
+        &render_pass_info, 
         NULL, 
         &render->voxel_pipeline.render_pass
     );
@@ -501,19 +601,22 @@ VkShaderModule r_create_shader_module(VkDevice device, const char* filename)
     char* shader_src = NULL;
     size_t shader_src_size = r_read_file_binary(filename, &shader_src);
 
-    VkShaderModuleCreateInfo create_info = {0};
-    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    create_info.codeSize = shader_src_size;
-    create_info.pCode = (const uint32*)shader_src;
+    VkShaderModuleCreateInfo shader_module_info;
+    shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_module_info.pNext = NULL;
+    shader_module_info.flags = 0;
+    shader_module_info.codeSize = shader_src_size;
+    shader_module_info.pCode = (const u32*)shader_src;
 
     VkShaderModule shader_module;
 
-    VkResult shader_module_result = vkCreateShaderModule(
-        device, 
-        &create_info, 
-        NULL, 
-        &shader_module
-    );
+    VkResult shader_module_result = 
+        vkCreateShaderModule(
+            device, 
+            &shader_module_info, 
+            NULL, 
+            &shader_module
+        );
 
     if (shader_module_result != VK_SUCCESS)
     {
@@ -531,79 +634,125 @@ VkShaderModule r_create_shader_module(VkDevice device, const char* filename)
 
 void r_create_graphics_pipeline(Render* render)
 {
-    VkShaderModule vert_module = r_create_shader_module(
-        render->vulkan_context.device, 
-        "assets/shaders/bin/test.vert.spv"
-    );
+    VkShaderModule vert_module = 
+        r_create_shader_module(
+            render->vulkan_context.device, 
+            "assets/shaders/bin/test.vert.spv"
+        );
 
-    VkShaderModule frag_module = r_create_shader_module(
-        render->vulkan_context.device, 
-        "assets/shaders/bin/test.frag.spv"
-    );
+    VkShaderModule frag_module = 
+        r_create_shader_module(
+            render->vulkan_context.device, 
+            "assets/shaders/bin/test.frag.spv"
+        );
 
-    VkPipelineShaderStageCreateInfo vert_stage = {0};
-    vert_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vert_stage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vert_stage.module = vert_module;
-    vert_stage.pName = "main";
+    VkPipelineShaderStageCreateInfo vert_stage_info;
+    vert_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vert_stage_info.pNext = NULL;
+    vert_stage_info.flags = 0;
+    vert_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vert_stage_info.module = vert_module;
+    vert_stage_info.pName = "main";
+    vert_stage_info.pSpecializationInfo = NULL;
 
-    VkPipelineShaderStageCreateInfo frag_stage = {0};
-    frag_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    frag_stage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    frag_stage.module = frag_module;
-    frag_stage.pName = "main";
+    VkPipelineShaderStageCreateInfo frag_stage_info;
+    frag_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    frag_stage_info.pNext = NULL;
+    frag_stage_info.flags = 0;
+    frag_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    frag_stage_info.module = frag_module;
+    frag_stage_info.pName = "main";
+    frag_stage_info.pSpecializationInfo = NULL;
 
-    VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage, frag_stage};
+    VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage_info, frag_stage_info};
 
-    VkPipelineVertexInputStateCreateInfo vertex_input = {0};
-    vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    VkPipelineVertexInputStateCreateInfo pipeline_vertex_input_state_info;
+    pipeline_vertex_input_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    pipeline_vertex_input_state_info.pNext = NULL;
+    pipeline_vertex_input_state_info.flags = 0;
+    pipeline_vertex_input_state_info.vertexBindingDescriptionCount = 0;
+    pipeline_vertex_input_state_info.pVertexBindingDescriptions = NULL;
+    pipeline_vertex_input_state_info.vertexAttributeDescriptionCount = 0;
+    pipeline_vertex_input_state_info.pVertexAttributeDescriptions = NULL;
 
-    VkPipelineInputAssemblyStateCreateInfo input_assembly = {0};
-    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    VkPipelineInputAssemblyStateCreateInfo pipeline_input_assembly_state_info;
+    pipeline_input_assembly_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    pipeline_input_assembly_state_info.pNext = NULL;
+    pipeline_input_assembly_state_info.flags = 0;
+    pipeline_input_assembly_state_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    pipeline_input_assembly_state_info.primitiveRestartEnable = VK_FALSE;
 
-    VkViewport viewport = {0};
+    VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float32) render->swapchain_context.extent.width;
-    viewport.height = (float32) render->swapchain_context.extent.height;
+    viewport.width = (f32)render->swapchain_context.extent.width;
+    viewport.height = (f32)render->swapchain_context.extent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
-    VkRect2D scissor = {0};
-    scissor.offset.x = 0;
-    scissor.offset.y = 0;
-    scissor.extent = render->swapchain_context.extent;
+    VkRect2D scissor_rect;
+    scissor_rect.offset.x = 0;
+    scissor_rect.offset.y = 0;
+    scissor_rect.extent = render->swapchain_context.extent;
 
-    VkPipelineViewportStateCreateInfo viewport_state = {0};
-    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewport_state.viewportCount = 1;
-    viewport_state.pViewports = &viewport;
-    viewport_state.scissorCount = 1;
-    viewport_state.pScissors = &scissor;
+    VkPipelineViewportStateCreateInfo pipeline_viewport_state_info;
+    pipeline_viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    pipeline_viewport_state_info.pNext = NULL;
+    pipeline_viewport_state_info.flags = 0;
+    pipeline_viewport_state_info.viewportCount = 1;
+    pipeline_viewport_state_info.pViewports = &viewport;
+    pipeline_viewport_state_info.scissorCount = 1;
+    pipeline_viewport_state_info.pScissors = &scissor_rect;
 
-    VkPipelineRasterizationStateCreateInfo rasterizer = {0};
-    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_info;
+    pipeline_rasterization_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    pipeline_rasterization_state_info.pNext = NULL;
+    pipeline_rasterization_state_info.flags = 0;
+    pipeline_rasterization_state_info.depthClampEnable = VK_FALSE;
+    pipeline_rasterization_state_info.rasterizerDiscardEnable = VK_FALSE;
+    pipeline_rasterization_state_info.polygonMode = VK_POLYGON_MODE_FILL;
+    pipeline_rasterization_state_info.cullMode = VK_CULL_MODE_BACK_BIT;
+    pipeline_rasterization_state_info.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    pipeline_rasterization_state_info.depthBiasEnable = VK_FALSE;
+    pipeline_rasterization_state_info.depthBiasConstantFactor = 0.0f;
+    pipeline_rasterization_state_info.depthBiasClamp = 0.0f;
+    pipeline_rasterization_state_info.depthBiasSlopeFactor = 0.0f;
+    pipeline_rasterization_state_info.lineWidth = 1.0f;
 
-    VkPipelineMultisampleStateCreateInfo multisampling = {0};
-    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkPipelineMultisampleStateCreateInfo pipeline_multisampling_state_info;
+    pipeline_multisampling_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    pipeline_multisampling_state_info.pNext = NULL;
+    pipeline_multisampling_state_info.flags = 0;
+    pipeline_multisampling_state_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    pipeline_multisampling_state_info.sampleShadingEnable = VK_FALSE;
+    pipeline_multisampling_state_info.minSampleShading = 0.0f;
+    pipeline_multisampling_state_info.pSampleMask = NULL;
+    pipeline_multisampling_state_info.alphaToCoverageEnable = VK_FALSE;
+    pipeline_multisampling_state_info.alphaToOneEnable = VK_FALSE;
 
-    VkPipelineColorBlendAttachmentState color_blend_attachment = {0};
-    color_blend_attachment.colorWriteMask =
+    VkPipelineColorBlendAttachmentState pipeline_color_blend_attachment_state;
+    pipeline_color_blend_attachment_state.blendEnable = VK_FALSE;
+    pipeline_color_blend_attachment_state.srcColorBlendFactor = 0;
+    pipeline_color_blend_attachment_state.dstColorBlendFactor = 0;
+    pipeline_color_blend_attachment_state.colorBlendOp = 0;
+    pipeline_color_blend_attachment_state.srcAlphaBlendFactor = 0;
+    pipeline_color_blend_attachment_state.dstAlphaBlendFactor = 0;
+    pipeline_color_blend_attachment_state.alphaBlendOp = 0;
+    pipeline_color_blend_attachment_state.colorWriteMask =         
         VK_COLOR_COMPONENT_R_BIT |
         VK_COLOR_COMPONENT_G_BIT |
         VK_COLOR_COMPONENT_B_BIT |
         VK_COLOR_COMPONENT_A_BIT;
 
-    VkPipelineColorBlendStateCreateInfo color_blending = {0};
-    color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    color_blending.attachmentCount = 1;
-    color_blending.pAttachments = &color_blend_attachment;
+    VkPipelineColorBlendStateCreateInfo pipeline_color_blend_state_info;
+    pipeline_color_blend_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    pipeline_color_blend_state_info.pNext = NULL;
+    pipeline_color_blend_state_info.flags = 0;
+    pipeline_color_blend_state_info.logicOpEnable = 0;
+    pipeline_color_blend_state_info.logicOp = 0;
+    pipeline_color_blend_state_info.attachmentCount = 1;
+    pipeline_color_blend_state_info.pAttachments = &pipeline_color_blend_attachment_state;
+    pipeline_color_blend_state_info.blendConstants[4] = 0;
 
     VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -623,26 +772,33 @@ void r_create_graphics_pipeline(Render* render)
         exit(EXIT_FAILURE);
     }
 
-    VkGraphicsPipelineCreateInfo pipeline_info = {0};
-    pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipeline_info.stageCount = 2;
-    pipeline_info.pStages = shader_stages;
-    pipeline_info.pVertexInputState = &vertex_input;
-    pipeline_info.pInputAssemblyState = &input_assembly;
-    pipeline_info.pViewportState = &viewport_state;
-    pipeline_info.pRasterizationState = &rasterizer;
-    pipeline_info.pMultisampleState = &multisampling;
-    pipeline_info.pColorBlendState = &color_blending;
-    pipeline_info.layout = render->voxel_pipeline.layout;
-    pipeline_info.renderPass = render->voxel_pipeline.render_pass;
-    pipeline_info.subpass = 0;
+    VkGraphicsPipelineCreateInfo graphics_pipeline_info;
+    graphics_pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphics_pipeline_info.pNext = NULL;
+    graphics_pipeline_info.flags = 0;
+    graphics_pipeline_info.stageCount = 2;
+    graphics_pipeline_info.pStages = shader_stages;
+    graphics_pipeline_info.pVertexInputState = &pipeline_vertex_input_state_info;
+    graphics_pipeline_info.pInputAssemblyState = &pipeline_input_assembly_state_info;
+    graphics_pipeline_info.pTessellationState = NULL;
+    graphics_pipeline_info.pViewportState = &pipeline_viewport_state_info;
+    graphics_pipeline_info.pRasterizationState = &pipeline_rasterization_state_info;
+    graphics_pipeline_info.pMultisampleState = &pipeline_multisampling_state_info;
+    graphics_pipeline_info.pDepthStencilState = NULL;
+    graphics_pipeline_info.pColorBlendState = &pipeline_color_blend_state_info;
+    graphics_pipeline_info.pDynamicState = NULL;
+    graphics_pipeline_info.layout = render->voxel_pipeline.layout;
+    graphics_pipeline_info.renderPass = render->voxel_pipeline.render_pass;
+    graphics_pipeline_info.subpass = 0;
+    graphics_pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+    graphics_pipeline_info.basePipelineIndex = -1;
 
     VkResult graphics_pipeline_result = 
         vkCreateGraphicsPipelines(
             render->vulkan_context.device, 
             VK_NULL_HANDLE, 
             1, 
-            &pipeline_info, 
+            &graphics_pipeline_info, 
             NULL, 
             &render->voxel_pipeline.pipeline
         );
@@ -660,21 +816,23 @@ void r_create_graphics_pipeline(Render* render)
 
 void r_create_frame_buffers(Render* render)
 {
-    uint32 image_index;
+    u32 image_index;
     for (image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
-        VkFramebufferCreateInfo framebuffer_create_info = {0};
-        framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebuffer_create_info.renderPass = render->voxel_pipeline.render_pass;
-        framebuffer_create_info.attachmentCount = 1;
-        framebuffer_create_info.pAttachments = &render->swapchain_context.image_view_array[image_index];
-        framebuffer_create_info.width = render->swapchain_context.extent.width;
-        framebuffer_create_info.height = render->swapchain_context.extent.height;
-        framebuffer_create_info.layers = 1;
+        VkFramebufferCreateInfo framebuffer_info;
+        framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebuffer_info.pNext = NULL;
+        framebuffer_info.flags = 0;
+        framebuffer_info.renderPass = render->voxel_pipeline.render_pass;
+        framebuffer_info.attachmentCount = 1;
+        framebuffer_info.pAttachments = &render->swapchain_context.image_view_array[image_index];
+        framebuffer_info.width = render->swapchain_context.extent.width;
+        framebuffer_info.height = render->swapchain_context.extent.height;
+        framebuffer_info.layers = 1;
 
         vkCreateFramebuffer(
             render->vulkan_context.device, 
-            &framebuffer_create_info, 
+            &framebuffer_info, 
             NULL, 
             &render->swapchain_context.framebuffer_array[image_index]
         );
@@ -683,50 +841,62 @@ void r_create_frame_buffers(Render* render)
 
 void r_create_command_pool(Render* render)
 {
-    VkCommandPoolCreateInfo command_pool_create_info = {0};
-    command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    command_pool_create_info.pNext = NULL;
-    command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_create_info.queueFamilyIndex = render->vulkan_context.graphics_queue_family_index;
+    VkCommandPoolCreateInfo command_pool_info;
+    command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    command_pool_info.pNext = NULL;
+    command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    command_pool_info.queueFamilyIndex = render->vulkan_context.graphics_queue_family_index;
 
     vkCreateCommandPool(
         render->vulkan_context.device, 
-        &command_pool_create_info, 
+        &command_pool_info, 
         NULL, 
         &render->vulkan_context.command_pool
     );
 }
 
-void r_record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32 image_index)
+void r_record_command_buffer(Render* render, VkCommandBuffer command_buffer, u32 image_index)
 {
-    VkCommandBufferBeginInfo command_buffer_info = {0};
+    VkCommandBufferBeginInfo command_buffer_info;
     command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_info.pNext = NULL;
+    command_buffer_info.flags = 0;
+    command_buffer_info.pInheritanceInfo = NULL;
 
     vkBeginCommandBuffer(command_buffer, &command_buffer_info);
 
-    VkClearValue clear_color = {0};
+    VkClearValue clear_color;
     clear_color.color.float32[0] = 0.1f;
     clear_color.color.float32[1] = 0.1f;
     clear_color.color.float32[2] = 0.2f;
     clear_color.color.float32[3] = 1.0f;
 
-    VkRenderPassBeginInfo render_pass_info = {0};
-    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_info.renderPass = render->voxel_pipeline.render_pass;
-    render_pass_info.framebuffer = render->swapchain_context.framebuffer_array[image_index];
-    render_pass_info.renderArea.offset.x = 0;
-    render_pass_info.renderArea.offset.y = 0;
-    render_pass_info.renderArea.extent = render->swapchain_context.extent;
-    render_pass_info.clearValueCount = 1;
-    render_pass_info.pClearValues = &clear_color;
+    VkRect2D render_area;
+    render_area.offset.x = 0;
+    render_area.offset.y = 0;
+    render_area.extent = render->swapchain_context.extent;
+
+    VkRenderPassBeginInfo render_pass_begin_info;
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.pNext = NULL;
+    render_pass_begin_info.renderPass = render->voxel_pipeline.render_pass;
+    render_pass_begin_info.framebuffer = render->swapchain_context.framebuffer_array[image_index];
+    render_pass_begin_info.renderArea = render_area;
+    render_pass_begin_info.clearValueCount = 1;
+    render_pass_begin_info.pClearValues = &clear_color;
 
     vkCmdBeginRenderPass(
         command_buffer,
-        &render_pass_info,
+        &render_pass_begin_info,
         VK_SUBPASS_CONTENTS_INLINE
     );
 
-    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, render->voxel_pipeline.pipeline);
+    vkCmdBindPipeline(
+        command_buffer, 
+        VK_PIPELINE_BIND_POINT_GRAPHICS, 
+        render->voxel_pipeline.pipeline
+    );
+    
     vkCmdDraw(command_buffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(command_buffer);
@@ -735,7 +905,7 @@ void r_record_command_buffer(Render* render, VkCommandBuffer command_buffer, uin
 
 void r_destroy_swapchain_context(Render* render)
 {
-    uint32 image_index;
+    u32 image_index;
     for (image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         vkDestroyFramebuffer(

@@ -15,7 +15,7 @@ typedef struct
     VkFormat format;
     VkExtent2D extent;
 
-    uint32 image_count;
+    u32 image_count;
     VkImage* image_array;
     VkImageView* image_view_array;
 
@@ -52,7 +52,7 @@ typedef struct
     VkSurfaceKHR surface;
     VkPhysicalDevice physical_device;
     VkDevice device;
-    uint32 graphics_queue_family_index;
+    u32 graphics_queue_family_index;
     VkQueue graphics_queue;
     VkQueue present_queue;
     VkCommandPool command_pool;
@@ -66,7 +66,7 @@ typedef struct
     FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
     Pipeline voxel_pipeline;
     
-    uint32 frame_index;
+    u32 frame_index;
 }
 Render;
 
@@ -93,7 +93,7 @@ void r_create_graphics_pipeline(Render* render);
 void r_create_frame_buffers(Render* render);
 
 void r_create_command_pool(Render* render);
-void r_record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32 image_index);
+void r_record_command_buffer(Render* render, VkCommandBuffer command_buffer, u32 image_index);
 
 size_t r_read_file_binary(const char* filename, char** out_buffer);
 VkShaderModule r_create_shader_module(VkDevice device, const char* filename);
