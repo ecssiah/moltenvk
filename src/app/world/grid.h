@@ -3,7 +3,7 @@
 
 #include <cglm/cglm.h>
 
-#include "../../types.h"
+#include "core/types.h"
 
 typedef uint32 SectorIndex;
 typedef ivec3 SectorCoordinate;

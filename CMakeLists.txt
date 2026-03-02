@@ -7,6 +7,7 @@ project(
 
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
@@ -42,14 +43,20 @@ add_custom_target(Shaders ALL DEPENDS ${SPIRV_SHADERS})
 
 add_executable(
     vulkantest 
-    src/main.c
-    src/platform/render.c
-    src/app/app.c
+    ${CMAKE_SOURCE_DIR}/src/main.c
+    ${CMAKE_SOURCE_DIR}/src/platform/render.c
+    ${CMAKE_SOURCE_DIR}/src/app/app.c
 )
 
 add_dependencies(
     vulkantest 
     Shaders
+)
+
+target_include_directories(
+    vulkantest
+    PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
 )
 
 target_link_libraries(
