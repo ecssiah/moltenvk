@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
+#include "core/types.h"
 #include "pipeline.h"
 #include "vulkan_context.h"
 #include "frame_context.h"
@@ -17,7 +18,7 @@ typedef struct
     
     SwapchainContext swapchain_context;
 
-    uint32_t frame_index;
+    uint32 frame_index;
     FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
 
     Pipeline voxel_pipeline;
@@ -47,6 +48,6 @@ void create_graphics_pipeline(Render* render);
 void create_frame_buffers(Render* render);
 
 void create_command_pool(Render* render);
-void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32_t image_index);
+void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32 image_index);
 
 #endif

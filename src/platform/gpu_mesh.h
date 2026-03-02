@@ -11,7 +11,7 @@ typedef struct
     VkBuffer index_buffer;
     VkDeviceMemory index_memory;
 
-    uint32_t index_count;
+    uint32 index_count;
 }
 GpuMesh;
 

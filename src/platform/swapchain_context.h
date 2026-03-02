@@ -10,7 +10,7 @@ typedef struct
     VkFormat format;
     VkExtent2D extent;
 
-    uint32_t image_count;
+    uint32 image_count;
     VkImage* image_array;
     VkImageView* image_view_array;
 

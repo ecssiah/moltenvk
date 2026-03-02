@@ -19,13 +19,15 @@ set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/shaders/src)
 set(SHADER_BIN_DIR ${CMAKE_SOURCE_DIR}/shaders/bin)
 
 file(
-    GLOB SHADER_SOURCES
+    GLOB 
+    SHADER_SOURCES
     ${SHADER_SRC_DIR}/*.vert
     ${SHADER_SRC_DIR}/*.frag
 )
 
 foreach(SHADER ${SHADER_SOURCES})
     get_filename_component(FILE_NAME ${SHADER} NAME)
+    
     set(SPIRV ${SHADER_BIN_DIR}/${FILE_NAME}.spv)
 
     add_custom_command(

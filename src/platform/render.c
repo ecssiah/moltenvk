@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "frame_context.h"
-#include "core/types.h"
 
 void render_init(Render* render, GLFWwindow* window)
 {
