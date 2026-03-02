@@ -1,5 +1,5 @@
 #ifndef GRID_H
-#define GRID_H
+#define GRID_H 1
 
 #include <cglm/cglm.h>
 

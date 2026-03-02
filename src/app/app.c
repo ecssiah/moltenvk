@@ -3,10 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-void app_init(App* app)
+void a_init(App* app)
 {
-    memset(app, 0, sizeof (*app));
-
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -18,10 +16,10 @@ void app_init(App* app)
         NULL
     );
 
-    render_init(&app->render, app->window);
+    r_init(&app->render, app->window);
 }
 
-void app_start(App* app)
+void a_start(App* app)
 {
     while (!glfwWindowShouldClose(app->window))
     {
@@ -32,13 +30,13 @@ void app_start(App* app)
             glfwSetWindowShouldClose(app->window, GLFW_TRUE);
         }
 
-        render_frame(&app->render);
+        r_render(&app->render);
     }
 }
 
-void app_shutdown(App* app) 
+void a_quit(App* app) 
 {
-    render_destroy(&app->render);
+    r_quit(&app->render);
 
     glfwDestroyWindow(app->window);
     glfwTerminate();

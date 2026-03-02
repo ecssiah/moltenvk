@@ -15,8 +15,8 @@ find_package(glm REQUIRED)
 
 find_program(GLSLC glslc REQUIRED)
 
-set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/shaders/src)
-set(SHADER_BIN_DIR ${CMAKE_SOURCE_DIR}/shaders/bin)
+set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/assets/shaders/src)
+set(SHADER_BIN_DIR ${CMAKE_SOURCE_DIR}/assets/shaders/bin)
 
 file(
     GLOB 
@@ -46,8 +46,8 @@ add_custom_target(Shaders ALL DEPENDS ${SPIRV_SHADERS})
 add_executable(
     vulkantest 
     ${CMAKE_SOURCE_DIR}/src/main.c
-    ${CMAKE_SOURCE_DIR}/src/platform/render.c
     ${CMAKE_SOURCE_DIR}/src/app/app.c
+    ${CMAKE_SOURCE_DIR}/src/platform/render.c
 )
 
 add_dependencies(
@@ -67,4 +67,12 @@ target_link_libraries(
     Vulkan::Vulkan
     glfw
     glm::glm
+)
+
+add_custom_command(
+    TARGET vulkantest POST_BUILD
+    COMMAND 
+        ${CMAKE_COMMAND} -E copy_directory 
+        ${CMAKE_SOURCE_DIR}/assets 
+        $<TARGET_FILE_DIR:vulkantest>/assets
 )

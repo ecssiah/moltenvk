@@ -1,5 +1,5 @@
 #ifndef APP_H
-#define APP_H
+#define APP_H 1
 
 #include "platform/render.h"
 
@@ -13,8 +13,8 @@ typedef struct
 } 
 App;
 
-void app_init(App* app);
-void app_start(App* app);
-void app_shutdown(App* app);
+void a_init(App* app);
+void a_start(App* app);
+void a_quit(App* app);
 
 #endif

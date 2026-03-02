@@ -2,8 +2,8 @@
 
 int main()
 {
-    App app;
+    App app = {0};
 
-    app_init(&app);
-    app_start(&app);
+    a_init(&app);
+    a_start(&app);
 }
