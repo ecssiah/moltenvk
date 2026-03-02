@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-struct SwapchainContext
+typedef struct
 {
     // Swapchain
     VkSwapchainKHR swapchain;
@@ -21,6 +21,7 @@ struct SwapchainContext
     VkImageView depth_view;
 
     VkFramebuffer* framebuffer_array;
-};
+}
+SwapchainContext;
 
 #endif

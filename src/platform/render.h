@@ -11,17 +11,18 @@
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
-typedef struct 
+typedef struct
 {
-    struct VulkanContext vulkan_context;
+    VulkanContext vulkan_context;
     
-    struct SwapchainContext swapchain_context;
+    SwapchainContext swapchain_context;
 
     uint32_t frame_index;
-    struct FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
+    FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
 
-    struct Pipeline voxel_pipeline;
-} Render;
+    Pipeline voxel_pipeline;
+}
+Render;
 
 void render_init(Render* render, GLFWwindow* window);
 void render_frame(Render* render);

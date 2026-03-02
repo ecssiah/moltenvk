@@ -10,7 +10,8 @@ typedef struct
 {
     GLFWwindow* window;
     Render render;
-} App;
+} 
+App;
 
 void app_init(App* app);
 void app_start(App* app);

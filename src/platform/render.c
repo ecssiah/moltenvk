@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "frame_context.h"
+#include "../types.h"
 
 void render_init(Render* render, GLFWwindow* window)
 {
@@ -30,10 +31,10 @@ void render_destroy(Render* render)
 
     destroy_swapchain_context(render);
 
-    uint32_t frame_index;
+    uint32 frame_index;
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
-        struct FrameContext* frame = &render->frame_context_array[frame_index];
+        FrameContext* frame = &render->frame_context_array[frame_index];
 
         vkDestroyFence(render->vulkan_context.device, frame->in_flight, NULL);
         vkDestroySemaphore(render->vulkan_context.device, frame->image_available, NULL);
@@ -52,7 +53,7 @@ void render_destroy(Render* render)
 
 void render_frame(Render* render)
 {
-    struct FrameContext* frame_context = &render->frame_context_array[render->frame_index];
+    FrameContext* frame_context = &render->frame_context_array[render->frame_index];
 
     vkWaitForFences(
         render->vulkan_context.device, 
@@ -62,7 +63,7 @@ void render_frame(Render* render)
         UINT64_MAX
     );
 
-    uint32_t image_index;
+    uint32 image_index;
 
     vkAcquireNextImageKHR(
         render->vulkan_context.device, 
@@ -139,7 +140,7 @@ void create_frame_contexts(Render* render)
         command_buffer_array
     );
 
-    uint32_t frame_index;
+    uint32 frame_index;
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
         render->frame_context_array[frame_index].command_buffer = command_buffer_array[frame_index];
@@ -154,7 +155,7 @@ void create_frame_contexts(Render* render)
 
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
-        struct FrameContext* frame_context = &render->frame_context_array[frame_index];
+        FrameContext* frame_context = &render->frame_context_array[frame_index];
 
         vkCreateSemaphore(
             render->vulkan_context.device, 
@@ -181,11 +182,11 @@ void create_frame_contexts(Render* render)
 
 void create_instance(Render* render)
 {
-    uint32_t extension_count = 0;
+    uint32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
     const char** required_extension_array = malloc(sizeof (const char*) * (extension_count + 1));
 
-    uint32_t extension_index;
+    uint32 extension_index;
     for (extension_index = 0; extension_index < extension_count; ++extension_index)
     {
         required_extension_array[extension_index] = extension_array[extension_index];
@@ -239,7 +240,7 @@ void create_surface(Render* render, GLFWwindow* window)
 
 void pick_physical_device(Render* render)
 {
-    uint32_t device_count = 0;
+    uint32 device_count = 0;
     vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, NULL);
 
     if (device_count == 0)
@@ -250,18 +251,18 @@ void pick_physical_device(Render* render)
     VkPhysicalDevice* physical_device_array = malloc(sizeof (VkPhysicalDevice) * device_count);
     vkEnumeratePhysicalDevices(render->vulkan_context.instance, &device_count, physical_device_array);
 
-    uint32_t device_index;
+    uint32 device_index;
     for (device_index = 0; device_index < device_count; ++device_index)
     {
         VkPhysicalDevice device = physical_device_array[device_index];
 
-        uint32_t queue_family_count = 0;
+        uint32 queue_family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, NULL);
 
         VkQueueFamilyProperties* queue_family_properties_array = malloc(sizeof (VkQueueFamilyProperties) * queue_family_count);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_family_properties_array);
 
-        uint32_t queue_family_index;
+        uint32 queue_family_index;
         for (queue_family_index = 0; queue_family_index < queue_family_count; ++queue_family_index)
         {
             VkBool32 present_support = VK_FALSE;
@@ -289,7 +290,7 @@ void pick_physical_device(Render* render)
 
 void create_logical_device(Render* render)
 {
-    float priority = 1.0f;
+    float32 priority = 1.0f;
 
     VkDeviceQueueCreateInfo device_queue_info = {0};
     device_queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -321,7 +322,7 @@ void create_swapchain(Render* render)
     VkSurfaceCapabilitiesKHR surface_capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &surface_capabilities);
 
-    uint32_t format_count;
+    uint32 format_count;
     vkGetPhysicalDeviceSurfaceFormatsKHR(render->vulkan_context.physical_device, render->vulkan_context.surface, &format_count, NULL);
 
     VkSurfaceFormatKHR* surface_format_array = malloc(sizeof (VkSurfaceFormatKHR) * format_count);
@@ -353,7 +354,7 @@ void create_swapchain(Render* render)
     instance_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
     instance_create_info.clipped = VK_TRUE;
 
-    uint32_t min_image_count = surface_capabilities.minImageCount + 1;
+    uint32 min_image_count = surface_capabilities.minImageCount + 1;
 
     if (
         surface_capabilities.maxImageCount > 0 &&
@@ -369,7 +370,7 @@ void create_swapchain(Render* render)
         // throw std::runtime_error("Failed to create swapchain");
     }
 
-    uint32_t image_count = 0;
+    uint32 image_count = 0;
     vkGetSwapchainImagesKHR(render->vulkan_context.device, render->swapchain_context.swapchain, &image_count, NULL);
     
     render->swapchain_context.image_array = malloc(sizeof (VkImage) * image_count);
@@ -383,7 +384,7 @@ void create_swapchain(Render* render)
 
 void create_image_views(Render* render)
 {
-    uint32_t image_index;
+    uint32 image_index;
     for (image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         VkImageViewCreateInfo image_view_create_info = {0};
@@ -476,7 +477,7 @@ VkShaderModule create_shader_module(VkDevice device, const char* filename)
     VkShaderModuleCreateInfo create_info = {0};
     create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     create_info.codeSize = shader_src_size;
-    create_info.pCode = (const uint32_t*)shader_src;
+    create_info.pCode = (const uint32*)shader_src;
 
     VkShaderModule shader_module;
     if (vkCreateShaderModule(device, &create_info, NULL, &shader_module) != VK_SUCCESS)
@@ -526,8 +527,8 @@ void create_graphics_pipeline(Render* render)
     VkViewport viewport = {0};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float) render->swapchain_context.extent.width;
-    viewport.height = (float) render->swapchain_context.extent.height;
+    viewport.width = (float32) render->swapchain_context.extent.width;
+    viewport.height = (float32) render->swapchain_context.extent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -613,7 +614,7 @@ void create_graphics_pipeline(Render* render)
 
 void create_frame_buffers(Render* render)
 {
-    uint32_t image_index;
+    uint32 image_index;
     for (image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         VkFramebufferCreateInfo framebuffer_create_info = {0};
@@ -644,7 +645,7 @@ void create_command_pool(Render* render)
     vkCreateCommandPool(render->vulkan_context.device, &command_pool_create_info, NULL, &render->vulkan_context.command_pool);
 }
 
-void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32_t image_index)
+void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32 image_index)
 {
     VkCommandBufferBeginInfo command_buffer_info = {0};
     command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -682,7 +683,7 @@ void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint3
 
 void destroy_swapchain_context(Render* render)
 {
-    uint32_t image_index;
+    uint32 image_index;
     for (image_index = 0; image_index < render->swapchain_context.image_count; ++image_index)
     {
         vkDestroyFramebuffer(

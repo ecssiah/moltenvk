@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-struct VulkanContext
+typedef struct
 {
     VkInstance instance;
     VkSurfaceKHR surface;
@@ -13,6 +13,7 @@ struct VulkanContext
     VkQueue graphics_queue;
     VkQueue present_queue;
     VkCommandPool command_pool;
-};
+}
+VulkanContext;
 
 #endif

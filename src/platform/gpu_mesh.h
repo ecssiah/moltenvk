@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-struct GpuMesh
+typedef struct
 {
     VkBuffer vertex_buffer;
     VkDeviceMemory vertex_memory;
@@ -12,6 +12,7 @@ struct GpuMesh
     VkDeviceMemory index_memory;
 
     uint32_t index_count;
-};
+}
+GpuMesh;
 
 #endif

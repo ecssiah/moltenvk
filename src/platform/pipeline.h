@@ -3,11 +3,12 @@
 
 #include <vulkan/vulkan.h>
 
-struct Pipeline
+typedef struct
 {
     VkRenderPass render_pass;
     VkPipelineLayout layout;
     VkPipeline pipeline;
-};
+}
+Pipeline;
 
 #endif

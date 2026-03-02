@@ -3,10 +3,12 @@
 
 #include <cglm/cglm.h>
 
-typedef uint32_t SectorIndex;
+#include "../../types.h"
+
+typedef uint32 SectorIndex;
 typedef ivec3 SectorCoordinate;
 
-typedef uint32_t CellIndex;
+typedef uint32 CellIndex;
 typedef ivec3 CellCoordinate;
 
 typedef ivec3 GridCoordinate;
@@ -15,45 +17,45 @@ typedef ivec3 GridCoordinate;
 #define SECTOR_RADIUS_IN_CELLS      2
 #define CELL_RADIUS                 0.5f
 
-static inline uint32_t get_world_size_in_sectors()
+static inline uint32 get_world_size_in_sectors()
 {
     return 2 * WORLD_RADIUS_IN_SECTORS + 1;
 }
 
-static inline uint32_t get_world_area_in_sectors()
+static inline uint32 get_world_area_in_sectors()
 {
-    const uint32_t world_size_in_sectors = get_world_size_in_sectors();
+    const uint32 world_size_in_sectors = get_world_size_in_sectors();
 
     return world_size_in_sectors * world_size_in_sectors;
 }
 
-static inline uint32_t get_world_volume_in_sectors()
+static inline uint32 get_world_volume_in_sectors()
 {
-    const uint32_t world_size_in_sectors = get_world_size_in_sectors();
+    const uint32 world_size_in_sectors = get_world_size_in_sectors();
 
     return world_size_in_sectors * world_size_in_sectors * world_size_in_sectors;
 }
 
-static inline uint32_t get_sector_size_in_cells()
+static inline uint32 get_sector_size_in_cells()
 {
     return 2 * SECTOR_RADIUS_IN_CELLS + 1;
 }
 
-static inline uint32_t get_sector_area_in_cells()
+static inline uint32 get_sector_area_in_cells()
 {
-    const uint32_t sector_size_in_cells = get_sector_size_in_cells();
+    const uint32 sector_size_in_cells = get_sector_size_in_cells();
 
     return sector_size_in_cells * sector_size_in_cells;
 }
 
-static inline uint32_t get_sector_volume_in_cells()
+static inline uint32 get_sector_volume_in_cells()
 {
-    const uint32_t sector_size_in_cells = get_sector_area_in_cells();
+    const uint32 sector_size_in_cells = get_sector_area_in_cells();
 
     return sector_size_in_cells * sector_size_in_cells * sector_size_in_cells;
 }
 
-static inline uint32_t get_world_radius_in_cells()
+static inline uint32 get_world_radius_in_cells()
 {
     return WORLD_RADIUS_IN_SECTORS * get_sector_size_in_cells() + SECTOR_RADIUS_IN_CELLS;
 }
@@ -107,7 +109,7 @@ static inline bool cell_coordinate_is_valid(CellCoordinate cell_coordinate)
 
 static inline bool grid_coordinate_is_valid(GridCoordinate grid_coordinate)
 {
-    const uint32_t world_radius_in_cells = get_world_radius_in_cells();
+    const uint32 world_radius_in_cells = get_world_radius_in_cells();
 
     const bool in_x_range = grid_coordinate[0] >= -world_radius_in_cells && grid_coordinate[0] <= world_radius_in_cells;
     const bool in_y_range = grid_coordinate[1] >= -world_radius_in_cells && grid_coordinate[1] <= world_radius_in_cells;
@@ -127,8 +129,8 @@ static inline void grid_coordinate_to_world_position(GridCoordinate grid_coordin
 
 static inline void sector_index_to_sector_coordinate(SectorIndex sector_index, SectorCoordinate out_sector_coordinate)
 {
-    const uint32_t world_area_in_sectors = get_world_area_in_sectors();
-    const uint32_t world_size_in_sectors = get_world_size_in_sectors();
+    const uint32 world_area_in_sectors = get_world_area_in_sectors();
+    const uint32 world_size_in_sectors = get_world_size_in_sectors();
 
     out_sector_coordinate[0] = sector_index % world_size_in_sectors;
     out_sector_coordinate[1] = (sector_index / world_size_in_sectors) % world_size_in_sectors;
@@ -157,8 +159,8 @@ static inline void sector_coordinate_to_grid_coordinate(SectorCoordinate sector_
 
 static inline void cell_index_to_cell_coordinate(CellIndex cell_index, CellCoordinate out_cell_coordinate)
 {
-    const uint32_t sector_area_in_cells = get_sector_area_in_cells();
-    const uint32_t sector_size_in_cells = get_sector_size_in_cells();
+    const uint32 sector_area_in_cells = get_sector_area_in_cells();
+    const uint32 sector_size_in_cells = get_sector_size_in_cells();
 
     out_cell_coordinate[0] = cell_index % sector_size_in_cells;
     out_cell_coordinate[1] = (cell_index / sector_size_in_cells) % sector_size_in_cells;
@@ -193,7 +195,7 @@ static inline void grid_coordinate_to_sector_coordinate(GridCoordinate grid_coor
 
 static inline void grid_coordinate_to_cell_coordinate(GridCoordinate grid_coordinate, CellCoordinate out_cell_coordinate)
 {
-    const uint32_t sector_size_in_cells = get_sector_size_in_cells();
+    const uint32 sector_size_in_cells = get_sector_size_in_cells();
 
     GridCoordinate grid_coordinate_indexable;
     glm_ivec3_adds(grid_coordinate, get_world_radius_in_cells(), grid_coordinate_indexable);
