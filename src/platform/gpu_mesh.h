@@ -1,4 +1,5 @@
-#pragma  once
+#ifndef GPU_MESH_H
+#define GPU_MESH_H
 
 #include <vulkan/vulkan.h>
 
@@ -12,3 +13,5 @@ struct GpuMesh
 
     uint32_t index_count;
 };
+
+#endif

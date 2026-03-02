@@ -1,11 +1,14 @@
-#pragma once
+#ifndef FRAME_CONTEXT_H
+#define FRAME_CONTEXT_H
 
 #include <vulkan/vulkan.h>
 
 struct FrameContext 
 {
-    VkCommandBuffer command_buffer = {};
-    VkSemaphore image_available = {};
-    VkSemaphore render_finished = {};
-    VkFence in_flight = {};
+    VkCommandBuffer command_buffer;
+    VkSemaphore image_available;
+    VkSemaphore render_finished;
+    VkFence in_flight;
 };
+
+#endif

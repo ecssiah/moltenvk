@@ -1,16 +1,19 @@
-#pragma ounce
+#ifndef APP_H
+#define APP_H
 
 #include "../platform/render.h"
 
-static constexpr int WINDOW_WIDTH = 1024;
-static constexpr int WINDOW_HEIGHT = 768;
+#define WINDOW_WIDTH    1024
+#define WINDOW_HEIGHT   768
 
-struct App
+typedef struct
 {
     GLFWwindow* window;
     Render render;
-};
+} App;
 
 void app_init(App* app);
 void app_start(App* app);
 void app_shutdown(App* app);
+
+#endif

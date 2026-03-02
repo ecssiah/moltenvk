@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RENDER_H
+#define RENDER_H
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
@@ -8,23 +9,21 @@
 #include "frame_context.h"
 #include "swapchain_context.h"
 
-static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+#define MAX_FRAMES_IN_FLIGHT 2
 
-struct Render
+typedef struct 
 {
-    GLFWwindow* window = nullptr;
+    struct VulkanContext vulkan_context;
     
-    VulkanContext vulkan_context;
-    
-    SwapchainContext swapchain_context;
+    struct SwapchainContext swapchain_context;
 
-    uint32_t frame_index = 0;
-    FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
+    uint32_t frame_index;
+    struct FrameContext frame_context_array[MAX_FRAMES_IN_FLIGHT];
 
-    Pipeline voxel_pipeline;
-};
+    struct Pipeline voxel_pipeline;
+} Render;
 
-void render_init(Render* render);
+void render_init(Render* render, GLFWwindow* window);
 void render_frame(Render* render);
 void render_resize(Render* render);
 void render_destroy(Render* render);
@@ -48,3 +47,5 @@ void create_frame_buffers(Render* render);
 
 void create_command_pool(Render* render);
 void record_command_buffer(Render* render, VkCommandBuffer command_buffer, uint32_t image_index);
+
+#endif

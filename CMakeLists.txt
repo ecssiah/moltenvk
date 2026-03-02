@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     vulkantest 
-    LANGUAGES C CXX
+    LANGUAGES C
 )
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
@@ -44,9 +42,9 @@ add_custom_target(Shaders ALL DEPENDS ${SPIRV_SHADERS})
 
 add_executable(
     vulkantest 
-    src/main.cpp
-    src/platform/render.cpp
-    src/app/App.cpp
+    src/main.c
+    src/platform/render.c
+    src/app/app.c
 )
 
 add_dependencies(

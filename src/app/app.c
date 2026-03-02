@@ -1,7 +1,12 @@
 #include "app.h"
 
+#include <stdio.h>
+#include <string.h>
+
 void app_init(App* app)
 {
+    memset(app, 0, sizeof (*app));
+
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -9,14 +14,11 @@ void app_init(App* app)
         WINDOW_WIDTH, 
         WINDOW_HEIGHT, 
         "Vulkan Test", 
-        nullptr, 
-        nullptr
+        NULL, 
+        NULL
     );
 
-    app->render = {};
-    app->render.window = app->window;
-
-    render_init(&app->render);
+    render_init(&app->render, app->window);
 }
 
 void app_start(App* app)
