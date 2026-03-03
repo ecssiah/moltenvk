@@ -8,7 +8,7 @@ typedef struct Texture Texture;
 typedef struct Material Material;
 typedef struct Renderer Renderer;
 
-Renderer* renderer_create(PlatformWindow* platform_window);
+Renderer* renderer_create(Platform* platform);
 void renderer_draw(Renderer* Renderer);
 void renderer_destroy(Renderer* Renderer);
 

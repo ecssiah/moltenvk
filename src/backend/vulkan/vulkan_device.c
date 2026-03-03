@@ -56,11 +56,11 @@ void vb_create_instance(VulkanBackend* vulkan_backend)
     free(required_extension_array);
 }
 
-void vb_create_surface(VulkanBackend* vulkan_backend, PlatformWindow* window)
+void vb_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
 {
     vulkan_backend->vulkan_device_context.surface = 
-        platform_window_create_vulkan_surface(
-            window, 
+        platform_create_vulkan_surface(
+            platform, 
             vulkan_backend->vulkan_device_context.instance
         );
 }

@@ -69,7 +69,7 @@ struct VulkanBackend
 };
 
 void vb_create_instance(VulkanBackend* vulkan_backend);
-void vb_create_surface(VulkanBackend* vulkan_backend, PlatformWindow* window);
+void vb_create_surface(VulkanBackend* vulkan_backend, Platform* platform);
 void vb_pick_physical_device(VulkanBackend* vulkan_backend);
 void vb_create_logical_device(VulkanBackend* vulkan_backend);
 

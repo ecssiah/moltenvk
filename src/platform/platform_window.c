@@ -8,7 +8,7 @@
 
 #include "core/log.h"
 
-static void pw_init(PlatformWindow* platform_window, const char* title)
+void pw_init(PlatformWindow* platform_window)
 {
     if (glfwInit())
     {
@@ -21,10 +21,12 @@ static void pw_init(PlatformWindow* platform_window, const char* title)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+    const char* window_title = "Vulkan Test";
+
     platform_window->handle = glfwCreateWindow(
         WINDOW_WIDTH, 
         WINDOW_HEIGHT, 
-        title, 
+        window_title, 
         NULL, 
         NULL
     );
@@ -37,49 +39,6 @@ static void pw_init(PlatformWindow* platform_window, const char* title)
     {
         LOG_FATAL("GLFW Failed to create window");
     }
-}
 
-PlatformWindow* platform_window_create()
-{
-    PlatformWindow* platform_window = malloc(sizeof (PlatformWindow));
-
-    pw_init(platform_window, "Vulkan Test");
-
-    return platform_window;
-}
-
-boolean platform_window_should_close(PlatformWindow *platform_window)
-{
-    return glfwWindowShouldClose(platform_window->handle);
-}
-
-void platform_window_poll_events(PlatformWindow *platform_window)
-{
-    glfwPollEvents();
-}
-
-void platform_window_destroy(PlatformWindow *platform_window) 
-{
-    glfwDestroyWindow(platform_window->handle);
-    glfwTerminate();
-}
-
-VkSurfaceKHR platform_window_create_vulkan_surface(PlatformWindow *window, VkInstance instance)
-{
-    VkSurfaceKHR surface;
-
-    VkResult surface_result =
-        glfwCreateWindowSurface(
-            instance,
-            window->handle,
-            NULL,
-            &surface
-        );
-
-    if (surface_result != VK_SUCCESS)
-    {
-        LOG_FATAL("Failed to create GLFW surface");
-    }
-
-    return surface;
+    LOG_INFO("Platform Window initialized");
 }

@@ -30,4 +30,15 @@ struct PlatformWindow
     boolean should_close;
 };
 
+struct Platform
+{
+    struct PlatformInput platform_input;
+    struct PlatformWindow platform_window;
+};
+
+void pi_init(struct PlatformInput* platform_input);
+void pw_init(struct PlatformWindow* platform_window);
+
+void pi_record_inputs(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
+
 #endif

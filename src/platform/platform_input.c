@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 
-static void pi_init(PlatformInput* platform_input)
+#include "core/log.h"
+
+void pi_init(PlatformInput* platform_input)
 {
     u32 key_index;
     for (key_index = 0; key_index < GLFW_KEY_LAST + 1; ++key_index)
@@ -23,18 +25,34 @@ static void pi_init(PlatformInput* platform_input)
     platform_input->current_mouse_y = 0.0;
     platform_input->previous_mouse_x = 0.0;
     platform_input->previous_mouse_y = 0.0;
+
+    LOG_INFO("Platform Input initialized");
 }
 
-PlatformInput* platform_input_create()
+void pi_record_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
 {
-    PlatformInput* platform_input = malloc(sizeof (PlatformInput));
+    GLFWwindow* window = platform_window->handle;
 
-    pi_init(platform_input);
+    int key;
+    for (key = 0; key < GLFW_KEY_LAST + 1; ++key)
+    {
+        platform_input->previous_key_array[key] = platform_input->current_key_array[key];
+        platform_input->current_key_array[key] = glfwGetKey(window, key) == GLFW_PRESS;
+    }
 
-    return platform_input;
-}
+    int button;
+    for (button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
+    {
+        platform_input->previous_mouse_array[button] = platform_input->current_mouse_array[button];
+        platform_input->current_mouse_array[button] = glfwGetMouseButton(window, button) == GLFW_PRESS;
+    }
 
-void platform_input_destroy(PlatformInput *platform_input) 
-{
-    free(platform_input);
+    platform_input->previous_mouse_x = platform_input->current_mouse_x;
+    platform_input->previous_mouse_y = platform_input->current_mouse_y;
+
+    glfwGetCursorPos(
+        window,
+        &platform_input->current_mouse_x,
+        &platform_input->current_mouse_y
+    );
 }

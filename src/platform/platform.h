@@ -7,15 +7,13 @@
 
 typedef struct PlatformInput PlatformInput;
 typedef struct PlatformWindow PlatformWindow;
+typedef struct Platform Platform;
 
-PlatformWindow* platform_window_create();
-void platform_window_destroy(PlatformWindow* platform_window);
+Platform* platform_create();
+void platform_destroy(Platform* platform);
 
-void platform_window_poll_events(PlatformWindow* platform_window);
-boolean platform_window_should_close(PlatformWindow* platform_window);
-VkSurfaceKHR platform_window_create_vulkan_surface(PlatformWindow* platform_window, VkInstance instance);
-
-PlatformInput* platform_input_create();
-void platform_input_destroy(PlatformInput* platform_input);
+void platform_poll_events(Platform* platform_window);
+boolean platform_should_close(Platform* platform_window);
+VkSurfaceKHR platform_create_vulkan_surface(Platform* platform, VkInstance instance);
 
 #endif

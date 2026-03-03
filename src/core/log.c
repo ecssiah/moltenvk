@@ -26,9 +26,10 @@ void log_init(const char* filepath)
     
     if (filepath)
     {
-        g_log_file = fopen(filepath, "w");
+        g_log_file = fopen(filepath, "a");
     }
 
+    LOG_INFO("\n\nLOGGING INIT\n");
 }
 
 void log_message(
@@ -51,9 +52,17 @@ void log_message(
         filename = last_slash + 1;
     }
 
+    time_t now = time(NULL);
+    struct tm tm_info;
+    localtime_r(&now, &tm_info);
+
+    char timestamp[32];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", &tm_info);
+
     fprintf(
         stderr, 
-        "[%s] (%s:%d) ",
+        "[%s] [%s] (%s:%d) ",
+        timestamp,
         log_level_strings[level],
         filename,
         line
@@ -62,7 +71,8 @@ void log_message(
     if (g_log_file && g_log_file != stderr) {
         fprintf(
             g_log_file, 
-            "[%s] (%s:%d) ",
+            "[%s] [%s] (%s:%d) ",
+            timestamp,
             log_level_strings[level],
             filename,
             line
@@ -108,6 +118,8 @@ void log_message(
 
 void log_shutdown(void)
 {
+    LOG_INFO("\n\nLOGGING SHUTDOWN\n");
+
     if (g_log_file && g_log_file != stderr)
     {
         fclose(g_log_file);

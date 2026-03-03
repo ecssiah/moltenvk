@@ -6,13 +6,13 @@
 
 #include "core/log.h"
 
-VulkanBackend* vulkan_backend_create(PlatformWindow* window)
+VulkanBackend* vulkan_backend_create(Platform* platform)
 {
     VulkanBackend* vulkan_backend = malloc(sizeof (VulkanBackend));
 
     // Device lifetime
     vb_create_instance(vulkan_backend);
-    vb_create_surface(vulkan_backend, window);
+    vb_create_surface(vulkan_backend, platform);
     vb_pick_physical_device(vulkan_backend);
     vb_create_logical_device(vulkan_backend);
     vb_create_command_pool(vulkan_backend);

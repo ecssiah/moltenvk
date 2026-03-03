@@ -8,17 +8,17 @@
 #include "platform/platform.h"
 #include "backend/vulkan/vulkan_backend.h"
 
-static void r_init(Renderer* renderer, PlatformWindow* platform_window)
+static void r_init(Renderer* renderer, Platform* platform)
 {
-    VulkanBackend* vulkan_backend = vulkan_backend_create(platform_window);
+    VulkanBackend* vulkan_backend = vulkan_backend_create(platform);
     renderer->vulkan_backend = vulkan_backend;
 }
 
-Renderer* renderer_create(PlatformWindow* platform_window)
+Renderer* renderer_create(Platform* platform)
 {
     Renderer* renderer = malloc(sizeof (Renderer));
 
-    r_init(renderer, platform_window);
+    r_init(renderer, platform);
 
     return renderer;
 }

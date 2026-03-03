@@ -8,10 +8,13 @@ int main()
 
     App app;
     app.is_running = false;
-    app.platform_window = NULL;
+    app.platform = NULL;
     app.renderer = NULL;
 
     app_init(&app);
+
+    LOG_INFO("Starting App");
+
     app_start(&app);
     app_destroy(&app);
 

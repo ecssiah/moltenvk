@@ -13,7 +13,7 @@ typedef struct VulkanDeviceContext VulkanDeviceContext;
 
 typedef struct VulkanBackend VulkanBackend;
 
-VulkanBackend* vulkan_backend_create(PlatformWindow* window);
+VulkanBackend* vulkan_backend_create(Platform* platform);
 void vulkan_backend_draw(VulkanBackend* backend);
 void vulkan_backend_destroy(VulkanBackend* backend);
 
