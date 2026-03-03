@@ -7,6 +7,7 @@
 #include "platform/platform.h"
 #include "platform/platform_internal.h"
 #include "renderer/renderer.h"
+#include "renderer/renderer_internal.h"
 
 void app_init(App* app)
 {

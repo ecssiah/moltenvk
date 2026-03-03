@@ -1,7 +1,7 @@
 #include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
-void vb_create_frame_context(VulkanBackend* vulkan_backend)
+void vf_create_frame_context(VulkanBackend* vulkan_backend)
 {
     VkCommandBufferAllocateInfo command_buffevb_allocate_info;
     command_buffevb_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -58,7 +58,7 @@ void vb_create_frame_context(VulkanBackend* vulkan_backend)
     }
 }
 
-void vb_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index)
+void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index)
 {
     VkCommandBufferBeginInfo command_buffevb_info;
     command_buffevb_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -106,7 +106,7 @@ void vb_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer com
     vkEndCommandBuffer(command_buffer);
 }
 
-void vb_render_frame(VulkanBackend* vulkan_backend)
+void vf_render_frame(VulkanBackend* vulkan_backend)
 {
     VulkanFrame* frame = &vulkan_backend->vulkan_frame_context.frame_array[vulkan_backend->vulkan_frame_context.frame_index];
 
@@ -132,7 +132,7 @@ void vb_render_frame(VulkanBackend* vulkan_backend)
     vkResetFences(vulkan_backend->vulkan_device_context.device, 1, &frame->in_flight);
     vkResetCommandBuffer(frame->command_buffer, 0);
 
-    vb_record_command_buffer(vulkan_backend, frame->command_buffer, image_index);
+    vf_record_command_buffer(vulkan_backend, frame->command_buffer, image_index);
 
     VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 

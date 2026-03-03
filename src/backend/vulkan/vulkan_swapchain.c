@@ -5,15 +5,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void vb_create_swapchain_context(VulkanBackend* vulkan_backend)
+void vs_create_swapchain_context(VulkanBackend* vulkan_backend)
 {
-    vb_create_swapchain(vulkan_backend);
-    vb_create_image_views(vulkan_backend);
-    vb_create_render_pass(vulkan_backend);
-    vb_create_frame_buffers(vulkan_backend);
+    vs_create_swapchain(vulkan_backend);
+    vs_create_image_views(vulkan_backend);
+    vs_create_render_pass(vulkan_backend);
+    vs_create_frame_buffers(vulkan_backend);
 }
 
-void vb_create_swapchain(VulkanBackend* vulkan_backend)
+void vs_create_swapchain(VulkanBackend* vulkan_backend)
 {
     VkSurfaceCapabilitiesKHR surface_capabilities;
 
@@ -116,7 +116,7 @@ void vb_create_swapchain(VulkanBackend* vulkan_backend)
     );
 }
 
-void vb_create_image_views(VulkanBackend* vulkan_backend)
+void vs_create_image_views(VulkanBackend* vulkan_backend)
 {
     u32 image_index;
     for (image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
@@ -153,7 +153,7 @@ void vb_create_image_views(VulkanBackend* vulkan_backend)
     }
 }
 
-void vb_create_render_pass(VulkanBackend* vulkan_backend)
+void vs_create_render_pass(VulkanBackend* vulkan_backend)
 {
     VkAttachmentDescription colovb_attachment;
     colovb_attachment.flags = 0;
@@ -201,7 +201,7 @@ void vb_create_render_pass(VulkanBackend* vulkan_backend)
     );
 }
 
-void vb_create_frame_buffers(VulkanBackend* vulkan_backend)
+void vs_create_frame_buffers(VulkanBackend* vulkan_backend)
 {
     u32 image_index;
     for (image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
@@ -226,7 +226,7 @@ void vb_create_frame_buffers(VulkanBackend* vulkan_backend)
     }
 }
 
-void vb_destroy_swapchain_context(VulkanBackend* vulkan_backend)
+void vs_destroy_swapchain_context(VulkanBackend* vulkan_backend)
 {
     u32 image_index;
     for (image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)

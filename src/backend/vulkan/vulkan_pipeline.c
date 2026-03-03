@@ -6,21 +6,21 @@
 
 #include "core/core.h"
 
-void vb_create_voxel_pipeline(VulkanBackend* vulkan_backend)
+void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend)
 {
-    vb_create_graphics_pipeline(vulkan_backend);
+    vp_create_graphics_pipeline(vulkan_backend);
 }
 
-void vb_create_graphics_pipeline(VulkanBackend* vulkan_backend)
+void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 {
     VkShaderModule vert_module = 
-        vb_create_shader_module(
+        vp_create_shader_module(
             vulkan_backend->vulkan_device_context.device, 
             "assets/shaders/bin/test.vert.spv"
         );
 
     VkShaderModule frag_module = 
-        vb_create_shader_module(
+        vp_create_shader_module(
             vulkan_backend->vulkan_device_context.device, 
             "assets/shaders/bin/test.frag.spv"
         );
@@ -193,7 +193,7 @@ void vb_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, vert_module, NULL);
 }
 
-VkShaderModule vb_create_shader_module(VkDevice device, const char* filename)
+VkShaderModule vp_create_shader_module(VkDevice device, const char* filename)
 {
     char* shader_src = NULL;
     size_t shader_src_size = c_read_file_binary(filename, &shader_src);

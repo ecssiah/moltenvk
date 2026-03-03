@@ -16,7 +16,7 @@ static void r_init(Renderer* renderer, Platform* platform)
 
 static void r_draw(Renderer* renderer)
 {
-    vulkan_backend_draw(renderer->vulkan_backend);
+    vulkan_backend_render(renderer->vulkan_backend);
 }
 
 Renderer* renderer_create(Platform* platform)

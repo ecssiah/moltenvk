@@ -11,33 +11,41 @@ VulkanBackend* vulkan_backend_create(Platform* platform)
     VulkanBackend* vulkan_backend = malloc(sizeof (VulkanBackend));
 
     // Device lifetime
-    vb_create_instance(vulkan_backend);
-    vb_create_surface(vulkan_backend, platform);
-    vb_pick_physical_device(vulkan_backend);
-    vb_create_logical_device(vulkan_backend);
-    vb_create_command_pool(vulkan_backend);
-    vb_create_frame_context(vulkan_backend);
+    vd_create_instance(vulkan_backend);
+    vd_create_surface(vulkan_backend, platform);
+    vd_pick_physical_device(vulkan_backend);
+    vd_create_logical_device(vulkan_backend);
+    vd_create_command_pool(vulkan_backend);
 
     LOG_INFO("Vulkan Device Initialized");
 
     // Swapchain lifetime
-    vb_create_swapchain_context(vulkan_backend);
+    vs_create_swapchain_context(vulkan_backend);
 
     LOG_INFO("Vulkan Swapchain Initialized");
 
     // Engine resources
-    vb_create_voxel_pipeline(vulkan_backend);
+    vp_create_voxel_pipeline(vulkan_backend);
 
     LOG_INFO("Vulkan Pipeline Initialized");
 
+    vf_create_frame_context(vulkan_backend);
+
+    LOG_INFO("Vulkan Frame Initialized");
+
     return vulkan_backend;
+}
+
+void vulkan_backend_render(VulkanBackend* vulkan_backend)
+{
+    vf_render_frame(vulkan_backend);
 }
 
 void vulkan_backend_destroy(VulkanBackend* vulkan_backend)
 {
     vkDeviceWaitIdle(vulkan_backend->vulkan_device_context.device);
 
-    vb_destroy_swapchain_context(vulkan_backend);
+    vs_destroy_swapchain_context(vulkan_backend);
 
     u32 frame_index;
     for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
@@ -59,4 +67,9 @@ void vulkan_backend_destroy(VulkanBackend* vulkan_backend)
     vkDestroyInstance(vulkan_backend->vulkan_device_context.instance, NULL);
 
     free(vulkan_backend);
+}
+
+void vulkan_backend_create_texture_from_image(VulkanBackend* backend, Image* image)
+{
+
 }

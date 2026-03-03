@@ -5,6 +5,14 @@
 
 #include "backend/vulkan/vulkan_backend.h"
 
+struct Image
+{
+    u32 width;
+    u32 height;
+    u32 channels;
+    u8* pixels;
+};
+
 struct Renderer
 {
     VulkanBackend* vulkan_backend;

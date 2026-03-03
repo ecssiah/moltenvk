@@ -49,14 +49,17 @@ set(
     ${CMAKE_SOURCE_DIR}/src/app/app.c
     ${CMAKE_SOURCE_DIR}/src/core/file.c
     ${CMAKE_SOURCE_DIR}/src/core/log.c
-    ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_backend.c
+    ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_commands.c
+    ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_memory.c
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_device.c
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_pipeline.c
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_frame.c
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_swapchain.c
+    ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_backend.c
     ${CMAKE_SOURCE_DIR}/src/platform/platform.c
     ${CMAKE_SOURCE_DIR}/src/platform/platform_input.c
     ${CMAKE_SOURCE_DIR}/src/platform/platform_window.c
+    ${CMAKE_SOURCE_DIR}/src/renderer/image.c
     ${CMAKE_SOURCE_DIR}/src/renderer/mesh.c
     ${CMAKE_SOURCE_DIR}/src/renderer/texture.c
     ${CMAKE_SOURCE_DIR}/src/renderer/renderer.c

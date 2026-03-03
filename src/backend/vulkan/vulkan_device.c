@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 
-void vb_create_instance(VulkanBackend* vulkan_backend)
+void vd_create_instance(VulkanBackend* vulkan_backend)
 {
     u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
@@ -56,7 +56,7 @@ void vb_create_instance(VulkanBackend* vulkan_backend)
     free(required_extension_array);
 }
 
-void vb_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
+void vd_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
 {
     vulkan_backend->vulkan_device_context.surface = 
         platform_create_vulkan_surface(
@@ -65,7 +65,7 @@ void vb_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
         );
 }
 
-void vb_pick_physical_device(VulkanBackend* vulkan_backend)
+void vd_pick_physical_device(VulkanBackend* vulkan_backend)
 {
     u32 device_count = 0;
 
@@ -145,7 +145,7 @@ void vb_pick_physical_device(VulkanBackend* vulkan_backend)
     LOG_FATAL("No suitable GPU found");
 }
 
-void vb_create_logical_device(VulkanBackend* vulkan_backend)
+void vd_create_logical_device(VulkanBackend* vulkan_backend)
 {
     f32 queue_priority = 1.0f;
 
@@ -196,7 +196,7 @@ void vb_create_logical_device(VulkanBackend* vulkan_backend)
     vulkan_backend->vulkan_device_context.present_queue = vulkan_backend->vulkan_device_context.graphics_queue;
 }
 
-void vb_create_command_pool(VulkanBackend* vulkan_backend)
+void vd_create_command_pool(VulkanBackend* vulkan_backend)
 {
     VkCommandPoolCreateInfo command_pool_info;
     command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -210,9 +210,4 @@ void vb_create_command_pool(VulkanBackend* vulkan_backend)
         NULL, 
         &vulkan_backend->vulkan_device_context.command_pool
     );
-}
-
-void vulkan_backend_draw(VulkanBackend* vulkan_backend)
-{
-    vb_render_frame(vulkan_backend);
 }
