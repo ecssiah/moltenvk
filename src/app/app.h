@@ -14,6 +14,7 @@ App;
 
 void app_init(App* app);
 void app_start(App* app);
+void app_update(App* app);
 void app_destroy(App* app);
 
 #endif

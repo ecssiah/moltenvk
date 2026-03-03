@@ -20,19 +20,27 @@ void platform_destroy(Platform* platform)
     free(platform);
 }
 
-boolean platform_should_close(Platform *platform)
+boolean platform_should_close(Platform* platform)
 {
     return glfwWindowShouldClose(platform->platform_window.handle);
 }
 
-void platform_poll_events(Platform *platform)
+void platform_poll_events(Platform* platform)
 {
     glfwPollEvents();
 
     pi_record_inputs(&platform->platform_input, &platform->platform_window);
 }
 
-void platform_window_destroy(Platform *platform) 
+void platform_handle_inputs(Platform* platform)
+{
+    if (platform->platform_input.current_key_array[GLFW_KEY_ESCAPE])
+    {
+        glfwSetWindowShouldClose(platform->platform_window.handle, GLFW_TRUE);
+    }
+}
+
+void platform_window_destroy(Platform* platform) 
 {
     glfwDestroyWindow(platform->platform_window.handle);
     glfwTerminate();

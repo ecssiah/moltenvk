@@ -20,12 +20,16 @@ void app_start(App* app)
 {
     while (!platform_should_close(app->platform))
     {
-        platform_poll_events(app->platform);
-
-        // platform_window_is_key_pressed()
-
-        renderer_draw(app->renderer);
+        app_update(app);
     }
+}
+
+void app_update(App* app)
+{
+    platform_poll_events(app->platform);
+    platform_handle_inputs(app->platform);
+
+    renderer_draw(app->renderer);
 }
 
 void app_destroy(App* app) 
