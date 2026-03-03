@@ -8,8 +8,6 @@
 
 VulkanBackend* vulkan_backend_create(PlatformWindow* window)
 {
-    LOG_INFO("Creating Vulkan Backend");
-
     VulkanBackend* vulkan_backend = malloc(sizeof (VulkanBackend));
 
     // Device lifetime

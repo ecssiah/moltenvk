@@ -8,6 +8,7 @@ typedef struct
 {
     boolean is_running;
     PlatformWindow* platform_window;
+    PlatformInput* platform_input;
     Renderer* renderer;
 } 
 App;

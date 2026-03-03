@@ -1,11 +1,12 @@
+#include "renderer/renderer.h"
 #include "renderer/renderer_internal.h"
 
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "backend/vulkan/vulkan_backend.h"
 #include "platform/platform.h"
+#include "backend/vulkan/vulkan_backend.h"
 
 static void r_init(Renderer* renderer, PlatformWindow* platform_window)
 {

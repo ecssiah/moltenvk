@@ -1,7 +1,5 @@
 #include "app/app.h"
 
-#include <stdio.h>
-
 #include "core/log.h"
 
 int main()

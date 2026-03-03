@@ -1,3 +1,4 @@
+#include "platform/platform.h"
 #include "platform/platform_internal.h"
 
 #include <stdlib.h>
@@ -47,19 +48,19 @@ PlatformWindow* platform_window_create()
     return platform_window;
 }
 
-boolean platform_window_should_close(PlatformWindow *window)
+boolean platform_window_should_close(PlatformWindow *platform_window)
 {
-    return glfwWindowShouldClose(window->handle);
+    return glfwWindowShouldClose(platform_window->handle);
 }
 
-void platform_window_poll_events(PlatformWindow *window)
+void platform_window_poll_events(PlatformWindow *platform_window)
 {
     glfwPollEvents();
 }
 
-void platform_window_destroy(PlatformWindow *window) 
+void platform_window_destroy(PlatformWindow *platform_window) 
 {
-    glfwDestroyWindow(window->handle);
+    glfwDestroyWindow(platform_window->handle);
     glfwTerminate();
 }
 
