@@ -1,13 +1,9 @@
 #ifndef TYPES_H
 #define TYPES_H 1
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
-
-#define true  1
-#define false 0
-
-typedef int         boolean;
 
 typedef uint8_t     u8;
 typedef uint16_t    u16;

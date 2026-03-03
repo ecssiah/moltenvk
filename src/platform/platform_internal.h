@@ -10,16 +10,16 @@
 
 struct PlatformInput
 {
-    boolean current_key_array[GLFW_KEY_LAST + 1];
-    boolean previous_key_array[GLFW_KEY_LAST + 1];
+    bool current_key_array[GLFW_KEY_LAST + 1];
+    bool previous_key_array[GLFW_KEY_LAST + 1];
     
-    boolean current_mouse_array[GLFW_MOUSE_BUTTON_LAST + 1];
-    boolean previous_mouse_array[GLFW_MOUSE_BUTTON_LAST + 1];
+    bool current_mouse_array[GLFW_MOUSE_BUTTON_LAST + 1];
+    bool previous_mouse_array[GLFW_MOUSE_BUTTON_LAST + 1];
 
-    double current_mouse_x;
-    double current_mouse_y;
-    double previous_mouse_x;
-    double previous_mouse_y;
+    f64 current_mouse_x;
+    f64 current_mouse_y;
+    f64 previous_mouse_x;
+    f64 previous_mouse_y;
 };
 
 struct PlatformWindow
@@ -27,7 +27,7 @@ struct PlatformWindow
     struct GLFWwindow* glfw_window;
     u32 width;
     u32 height;
-    boolean close_requested;
+    bool close_requested;
 };
 
 struct Platform

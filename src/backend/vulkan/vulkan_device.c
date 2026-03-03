@@ -12,32 +12,34 @@ void vd_create_instance(VulkanBackend* vulkan_backend)
 
     const char** required_extension_array = malloc(sizeof (const char*) * (extension_count + 1));
     
-    u32 extension_index;
-    for (extension_index = 0; extension_index < extension_count; ++extension_index)
+    for (u32 extension_index = 0; extension_index < extension_count; ++extension_index)
     {
         required_extension_array[extension_index] = extension_array[extension_index];
     }
 
     required_extension_array[extension_count] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
 
-    VkApplicationInfo application_info;
-    application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    application_info.pNext = NULL;
-    application_info.pApplicationName = "Vulkan Test";
-    application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    application_info.pEngineName = "Vulkan Test Engine";
-    application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    application_info.apiVersion = VK_API_VERSION_1_2;
+    VkApplicationInfo application_info = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pNext = NULL,
+        .pApplicationName = "Vulkan Test",
+        .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+        .pEngineName = "Vulkan Test Engine",
+        .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+        .apiVersion = VK_API_VERSION_1_2,
+    };
 
-    VkInstanceCreateInfo instance_create_info;
-    instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.pNext = NULL;
-    instance_create_info.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-    instance_create_info.pApplicationInfo = &application_info;
-    instance_create_info.enabledLayerCount = 0;
-    instance_create_info.ppEnabledLayerNames = NULL;
-    instance_create_info.enabledExtensionCount = extension_count + 1;
-    instance_create_info.ppEnabledExtensionNames = required_extension_array;
+    VkInstanceCreateInfo instance_create_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+        .pApplicationInfo = &application_info,
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = NULL,
+        .enabledExtensionCount = extension_count + 1,
+        .ppEnabledExtensionNames = required_extension_array,
+    };
 
     int instance_result = 
         vkCreateInstance(
@@ -90,8 +92,7 @@ void vd_pick_physical_device(VulkanBackend* vulkan_backend)
         physical_device_array
     );
 
-    u32 device_index;
-    for (device_index = 0; device_index < device_count; ++device_index)
+    for (u32 device_index = 0; device_index < device_count; ++device_index)
     {
         VkPhysicalDevice device = physical_device_array[device_index];
 
@@ -110,9 +111,8 @@ void vd_pick_physical_device(VulkanBackend* vulkan_backend)
             &queue_family_count, 
             queue_family_properties_array
         );
-
-        u32 queue_family_index;
-        for (queue_family_index = 0; queue_family_index < queue_family_count; ++queue_family_index)
+        
+        for (u32 queue_family_index = 0; queue_family_index < queue_family_count; ++queue_family_index)
         {
             VkBool32 present_support = VK_FALSE;
 
@@ -149,27 +149,30 @@ void vd_create_logical_device(VulkanBackend* vulkan_backend)
 {
     f32 queue_priority = 1.0f;
 
-    VkDeviceQueueCreateInfo device_queue_info;
-    device_queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    device_queue_info.pNext = NULL;
-    device_queue_info.flags = 0;
-    device_queue_info.queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index;
-    device_queue_info.queueCount = 1;
-    device_queue_info.pQueuePriorities = &queue_priority;
+    VkDeviceQueueCreateInfo device_queue_info = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index,
+        .queueCount = 1,
+        .pQueuePriorities = &queue_priority,
+    };
 
     const char* extension_array[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-    VkDeviceCreateInfo device_info;
-    device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_info.pNext = NULL;
-    device_info.flags = 0;
-    device_info.queueCreateInfoCount = 1;
-    device_info.pQueueCreateInfos = &device_queue_info;
-    device_info.enabledLayerCount = 0;
-    device_info.ppEnabledLayerNames = NULL;
-    device_info.enabledExtensionCount = 1;
-    device_info.ppEnabledExtensionNames = extension_array;
-    device_info.pEnabledFeatures = NULL;
+    VkDeviceCreateInfo device_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &device_queue_info,
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = NULL,
+        .enabledExtensionCount = 1,
+        .ppEnabledExtensionNames = extension_array,
+        .pEnabledFeatures = NULL,
+    };
 
     VkResult device_result = 
         vkCreateDevice(
@@ -198,11 +201,13 @@ void vd_create_logical_device(VulkanBackend* vulkan_backend)
 
 void vd_create_command_pool(VulkanBackend* vulkan_backend)
 {
-    VkCommandPoolCreateInfo command_pool_info;
-    command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    command_pool_info.pNext = NULL;
-    command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_info.queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index;
+    VkCommandPoolCreateInfo command_pool_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index,
+    };
 
     vkCreateCommandPool(
         vulkan_backend->vulkan_device_context.device, 

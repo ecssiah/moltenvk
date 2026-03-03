@@ -47,8 +47,7 @@ void vulkan_backend_destroy(VulkanBackend* vulkan_backend)
 
     vs_destroy_swapchain_context(vulkan_backend);
 
-    u32 frame_index;
-    for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
+    for (u32 frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
         VulkanFrame* frame = &vulkan_backend->vulkan_frame_context.frame_array[frame_index];
 

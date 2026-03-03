@@ -60,71 +60,71 @@ static u32 get_world_radius_in_cells()
     return WORLD_RADIUS_IN_SECTORS * get_sector_size_in_cells() + SECTOR_RADIUS_IN_CELLS;
 }
 
-static float get_cell_size()
+static f32 get_cell_size()
 {
     return 2.0f * CELL_RADIUS;
 }                   
 
-static float get_cell_area()
+static f32 get_cell_area()
 {
-    float cell_size = get_cell_size();
+    f32 cell_size = get_cell_size();
 
     return cell_size * cell_size;
 }
 
-static float get_cell_volume()
+static f32 get_cell_volume()
 {
-    float cell_size = get_cell_size();
+    f32 cell_size = get_cell_size();
 
     return cell_size * cell_size * cell_size;
 }
 
-static boolean sector_index_is_valid(SectorIndex sector_index)
+static bool sector_index_is_valid(SectorIndex sector_index)
 {
     return sector_index < get_world_volume_in_sectors();
 }
 
-static boolean cell_index_is_valid(CellIndex cell_index)
+static bool cell_index_is_valid(CellIndex cell_index)
 {
     return cell_index < get_sector_volume_in_cells();
 }
 
-static boolean sector_coordinate_is_valid(SectorCoordinate sector_coordinate)
+static bool sector_coordinate_is_valid(SectorCoordinate sector_coordinate)
 {
-    boolean in_x_range = sector_coordinate[0] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[0] <= WORLD_RADIUS_IN_SECTORS;
-    boolean in_y_range = sector_coordinate[1] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[1] <= WORLD_RADIUS_IN_SECTORS;
-    boolean in_z_range = sector_coordinate[2] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[2] <= WORLD_RADIUS_IN_SECTORS;
+    bool in_x_range = sector_coordinate[0] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[0] <= WORLD_RADIUS_IN_SECTORS;
+    bool in_y_range = sector_coordinate[1] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[1] <= WORLD_RADIUS_IN_SECTORS;
+    bool in_z_range = sector_coordinate[2] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[2] <= WORLD_RADIUS_IN_SECTORS;
 
     return in_x_range && in_y_range && in_z_range;
 }
 
-static boolean cell_coordinate_is_valid(CellCoordinate cell_coordinate)
+static bool cell_coordinate_is_valid(CellCoordinate cell_coordinate)
 {
-    boolean in_x_range = cell_coordinate[0] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[0] <= SECTOR_RADIUS_IN_CELLS;
-    boolean in_y_range = cell_coordinate[1] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[1] <= SECTOR_RADIUS_IN_CELLS;
-    boolean in_z_range = cell_coordinate[2] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[2] <= SECTOR_RADIUS_IN_CELLS;
+    bool in_x_range = cell_coordinate[0] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[0] <= SECTOR_RADIUS_IN_CELLS;
+    bool in_y_range = cell_coordinate[1] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[1] <= SECTOR_RADIUS_IN_CELLS;
+    bool in_z_range = cell_coordinate[2] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[2] <= SECTOR_RADIUS_IN_CELLS;
 
     return in_x_range && in_y_range && in_z_range;
 }
 
-static boolean grid_coordinate_is_valid(GridCoordinate grid_coordinate)
+static bool grid_coordinate_is_valid(GridCoordinate grid_coordinate)
 {
     u32 world_radius_in_cells = get_world_radius_in_cells();
 
-    boolean in_x_range = grid_coordinate[0] >= -world_radius_in_cells && grid_coordinate[0] <= world_radius_in_cells;
-    boolean in_y_range = grid_coordinate[1] >= -world_radius_in_cells && grid_coordinate[1] <= world_radius_in_cells;
-    boolean in_z_range = grid_coordinate[2] >= -world_radius_in_cells && grid_coordinate[2] <= world_radius_in_cells;
+    bool in_x_range = grid_coordinate[0] >= -world_radius_in_cells && grid_coordinate[0] <= world_radius_in_cells;
+    bool in_y_range = grid_coordinate[1] >= -world_radius_in_cells && grid_coordinate[1] <= world_radius_in_cells;
+    bool in_z_range = grid_coordinate[2] >= -world_radius_in_cells && grid_coordinate[2] <= world_radius_in_cells;
 
     return in_x_range && in_y_range && in_z_range;
 }
 
 static void grid_coordinate_to_world_position(GridCoordinate grid_coordinate, vec3 out_world_position)
 {
-    float cell_size = get_cell_size();
+    f32 cell_size = get_cell_size();
 
-    out_world_position[0] = (float)grid_coordinate[0] * cell_size;
-    out_world_position[1] = (float)grid_coordinate[1] * cell_size;
-    out_world_position[2] = (float)grid_coordinate[2] * cell_size;
+    out_world_position[0] = (f32)grid_coordinate[0] * cell_size;
+    out_world_position[1] = (f32)grid_coordinate[1] * cell_size;
+    out_world_position[2] = (f32)grid_coordinate[2] * cell_size;
 }
 
 static void sector_index_to_sector_coordinate(SectorIndex sector_index, SectorCoordinate out_sector_coordinate)

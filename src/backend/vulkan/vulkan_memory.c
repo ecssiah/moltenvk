@@ -46,9 +46,8 @@ void vm_create_buffer(
     );
 
     u32 memory_type_index = UINT32_MAX;
-
-    u32 i;
-    for (i = 0; i < mem_properties.memoryTypeCount; ++i)
+    
+    for (u32 i = 0; i < mem_properties.memoryTypeCount; ++i)
     {
         if (
             (mem_requirements.memoryTypeBits & (1 << i)) &&

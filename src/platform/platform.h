@@ -13,7 +13,7 @@ Platform* platform_create();
 void platform_update(Platform* platform);
 void platform_destroy(Platform* platform);
 
-boolean platform_is_active(Platform* platform);
+bool platform_is_active(Platform* platform);
 
 VkSurfaceKHR platform_create_vulkan_surface(Platform* platform, VkInstance instance);
 

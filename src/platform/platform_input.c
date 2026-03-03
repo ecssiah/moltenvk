@@ -7,15 +7,13 @@
 
 void pi_init(PlatformInput* platform_input)
 {
-    int key;
-    for (key = 0; key < GLFW_KEY_LAST + 1; ++key)
+    for (int key = 0; key < GLFW_KEY_LAST + 1; ++key)
     {
         platform_input->current_key_array[key] = false;
         platform_input->previous_key_array[key] = false;
     }
-
-    int button;
-    for (button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
+    
+    for (int button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
     {
         platform_input->current_mouse_array[button] = false;
         platform_input->previous_mouse_array[button] = false;
@@ -42,16 +40,14 @@ void p_poll_events(PlatformInput* platform_input, PlatformWindow* platform_windo
 void p_record_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
 {
     GLFWwindow* window = platform_window->glfw_window;
-
-    int key;
-    for (key = 0; key < GLFW_KEY_LAST + 1; ++key)
+    
+    for (int key = 0; key < GLFW_KEY_LAST + 1; ++key)
     {
         platform_input->previous_key_array[key] = platform_input->current_key_array[key];
         platform_input->current_key_array[key] = glfwGetKey(window, key) == GLFW_PRESS;
     }
 
-    int button;
-    for (button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
+    for (int button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
     {
         platform_input->previous_mouse_array[button] = platform_input->current_mouse_array[button];
         platform_input->current_mouse_array[button] = glfwGetMouseButton(window, button) == GLFW_PRESS;

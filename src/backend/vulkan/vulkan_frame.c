@@ -3,37 +3,38 @@
 
 void vf_create_frame_context(VulkanBackend* vulkan_backend)
 {
-    VkCommandBufferAllocateInfo command_buffevb_allocate_info;
-    command_buffevb_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    command_buffevb_allocate_info.pNext = NULL;
-    command_buffevb_allocate_info.commandPool = vulkan_backend->vulkan_device_context.command_pool;
-    command_buffevb_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    command_buffevb_allocate_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
+    VkCommandBufferAllocateInfo command_buffer_allocate_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = vulkan_backend->vulkan_device_context.command_pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = MAX_FRAMES_IN_FLIGHT,
+    };
 
-    VkCommandBuffer command_buffevb_array[MAX_FRAMES_IN_FLIGHT];
+    VkCommandBuffer command_buffer_array[MAX_FRAMES_IN_FLIGHT];
 
     vkAllocateCommandBuffers(
         vulkan_backend->vulkan_device_context.device, 
-        &command_buffevb_allocate_info, 
-        command_buffevb_array
+        &command_buffer_allocate_info, 
+        command_buffer_array
     );
 
-    VkSemaphoreCreateInfo semaphore_create_info;
-    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphore_create_info.pNext = NULL;
-    semaphore_create_info.flags = 0;
+    VkSemaphoreCreateInfo semaphore_create_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
 
-    VkFenceCreateInfo fence_create_info;
-    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_create_info.pNext = NULL;
-    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VkFenceCreateInfo fence_create_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
 
-    u32 frame_index;
-    for (frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
+    for (u32 frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
         VulkanFrame* frame = &vulkan_backend->vulkan_frame_context.frame_array[frame_index];
         
-        frame->command_buffer = command_buffevb_array[frame_index];
+        frame->command_buffer = command_buffer_array[frame_index];
 
         vkCreateSemaphore(
             vulkan_backend->vulkan_device_context.device, 
@@ -60,37 +61,37 @@ void vf_create_frame_context(VulkanBackend* vulkan_backend)
 
 void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index)
 {
-    VkCommandBufferBeginInfo command_buffevb_info;
-    command_buffevb_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffevb_info.pNext = NULL;
-    command_buffevb_info.flags = 0;
-    command_buffevb_info.pInheritanceInfo = NULL;
+    VkCommandBufferBeginInfo command_buffer_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    };
 
-    vkBeginCommandBuffer(command_buffer, &command_buffevb_info);
+    vkBeginCommandBuffer(command_buffer, &command_buffer_info);
 
-    VkClearValue cleavb_color;
-    cleavb_color.color.float32[0] = 0.1f;
-    cleavb_color.color.float32[1] = 0.1f;
-    cleavb_color.color.float32[2] = 0.2f;
-    cleavb_color.color.float32[3] = 1.0f;
+    VkClearValue clear_color =
+    {
+        .color = { 0.1f, 0.1f, 0.2f, 1.0f },
+    };
 
-    VkRect2D rendevb_area;
-    rendevb_area.offset.x = 0;
-    rendevb_area.offset.y = 0;
-    rendevb_area.extent = vulkan_backend->vulkan_swapchain_context.extent;
+    VkRect2D render_area = 
+    {
+        .offset = {0, 0},
+        .extent = vulkan_backend->vulkan_swapchain_context.extent,
+    };
 
-    VkRenderPassBeginInfo rendevb_pass_begin_info;
-    rendevb_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    rendevb_pass_begin_info.pNext = NULL;
-    rendevb_pass_begin_info.renderPass = vulkan_backend->voxel_pipeline_context.render_pass;
-    rendevb_pass_begin_info.framebuffer = vulkan_backend->vulkan_swapchain_context.framebuffer_array[image_index];
-    rendevb_pass_begin_info.renderArea = rendevb_area;
-    rendevb_pass_begin_info.clearValueCount = 1;
-    rendevb_pass_begin_info.pClearValues = &cleavb_color;
+    VkRenderPassBeginInfo render_pass_begin_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
+        .framebuffer = vulkan_backend->vulkan_swapchain_context.framebuffer_array[image_index],
+        .renderArea = render_area,
+        .clearValueCount = 1,
+        .pClearValues = &clear_color,
+    };
 
     vkCmdBeginRenderPass(
         command_buffer,
-        &rendevb_pass_begin_info,
+        &render_pass_begin_info,
         VK_SUBPASS_CONTENTS_INLINE
     );
 
@@ -136,16 +137,17 @@ void vf_render_frame(VulkanBackend* vulkan_backend)
 
     VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    VkSubmitInfo submit_info;
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.pNext = NULL;
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &frame->image_available;
-    submit_info.pWaitDstStageMask = wait_stage_array;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &frame->command_buffer;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &frame->render_finished;
+    VkSubmitInfo submit_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &frame->image_available,
+        .pWaitDstStageMask = wait_stage_array,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &frame->command_buffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &frame->render_finished,
+    };
 
     vkQueueSubmit(
         vulkan_backend->vulkan_device_context.graphics_queue,
@@ -154,15 +156,15 @@ void vf_render_frame(VulkanBackend* vulkan_backend)
         frame->in_flight
     );
 
-    VkPresentInfoKHR present_info;
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.pNext = NULL;
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = &frame->render_finished;
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = &vulkan_backend->vulkan_swapchain_context.swapchain;
-    present_info.pImageIndices = &image_index;
-    present_info.pResults = NULL;
+    VkPresentInfoKHR present_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &frame->render_finished,
+        .swapchainCount = 1,
+        .pSwapchains = &vulkan_backend->vulkan_swapchain_context.swapchain,
+        .pImageIndices = &image_index,
+    };
 
     vkQueuePresentKHR(vulkan_backend->vulkan_device_context.present_queue, &present_info);
 

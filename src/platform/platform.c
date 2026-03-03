@@ -27,7 +27,7 @@ void platform_destroy(Platform* platform)
     free(platform);
 }
 
-boolean platform_is_active(Platform* platform)
+bool platform_is_active(Platform* platform)
 {
     return !glfwWindowShouldClose(platform->platform_window.glfw_window);
 }

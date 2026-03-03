@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    boolean is_running;
+    bool is_running;
     Platform* platform;
     Renderer* renderer;
 } 

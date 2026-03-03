@@ -6,10 +6,10 @@ int main()
 {
     log_init("logs/engine.log");
 
-    App app;
-    app.is_running = false;
-    app.platform = NULL;
-    app.renderer = NULL;
+    App app = 
+    {
+        .is_running = false,
+    };
 
     app_init(&app);
 
