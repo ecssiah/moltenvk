@@ -43,8 +43,8 @@ endforeach()
 
 add_custom_target(Shaders ALL DEPENDS ${SPIRV_SHADERS})
 
-add_executable(
-    vulkantest 
+set(
+    SRC_FILE_LIST
     ${CMAKE_SOURCE_DIR}/src/main.c
     ${CMAKE_SOURCE_DIR}/src/app/app.c
     ${CMAKE_SOURCE_DIR}/src/core/file.c
@@ -62,6 +62,17 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/src/renderer/renderer.c
 )
 
+set(
+    EXTERNAL_FILE_LIST
+    ${CMAKE_SOURCE_DIR}/external/stb/stb_image_loader.c
+)
+
+add_executable(
+    vulkantest 
+    ${SRC_FILE_LIST}
+    ${EXTERNAL_FILE_LIST}
+)
+
 add_dependencies(
     vulkantest 
     Shaders
@@ -71,6 +82,7 @@ target_include_directories(
     vulkantest
     PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/external
 )
 
 target_link_libraries(
