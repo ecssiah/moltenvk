@@ -3,41 +3,31 @@
 #include <stdio.h>
 #include <string.h>
 
-void a_init(App* app)
+void app_init(App* app)
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    app->window = glfwCreateWindow(
-        WINDOW_WIDTH, 
-        WINDOW_HEIGHT, 
-        "Vulkan Test", 
-        NULL, 
-        NULL
-    );
-
-    r_init(&app->render, app->window);
+    app->platform_window = platform_window_create();
+    app->renderer = renderer_create(app->platform_window);
+    
+    platform_window_init(app->platform_window, "Vulkan Test");
+    renderer_init(app->renderer, app->platform_window);
+    
+    app->is_running = true;
 }
 
-void a_start(App* app)
+void app_start(App* app)
 {
-    while (!glfwWindowShouldClose(app->window))
+    while (!platform_window_should_close(app->platform_window))
     {
-        glfwPollEvents();
+        platform_window_poll_events(app->platform_window);
 
-        if (glfwGetKey(app->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        {
-            glfwSetWindowShouldClose(app->window, GLFW_TRUE);
-        }
+        // platform_window_is_key_pressed()
 
-        r_render(&app->render);
+        renderer_draw(app->renderer);
     }
 }
 
-void a_quit(App* app) 
+void app_destroy(App* app) 
 {
-    r_quit(&app->render);
-
-    glfwDestroyWindow(app->window);
-    glfwTerminate();
+    renderer_destroy(app->renderer);
+    platform_window_destroy(app->platform_window);
 }

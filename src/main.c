@@ -1,9 +1,21 @@
 #include "app/app.h"
 
+#include <stdio.h>
+
+#include "core/log.h"
+
 int main()
 {
-    App app = {0};
+    log_init("logs/engine.log");
 
-    a_init(&app);
-    a_start(&app);
+    App app;
+    app.is_running = false;
+    app.platform_window = NULL;
+    app.renderer = NULL;
+
+    app_init(&app);
+    app_start(&app);
+    app_destroy(&app);
+
+    log_shutdown();
 }

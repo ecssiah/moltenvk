@@ -1,0 +1,8 @@
+[INFO] (window.c:20) GLFW initialized
+[INFO] (window.c:39) GLFW window created
+[INFO] (window.c:46) GLFW Vulkan supported: 1
+
+[INFO] (vulkan_backend.c:10) Creating Vulkan Backend
+[INFO] (vulkan_backend.c:22) Vulkan Device Initialized
+[INFO] (vulkan_backend.c:27) Vulkan Swapchain Initialized
+[INFO] (vulkan_backend.c:32) Vulkan Pipeline Initialized
