@@ -7,18 +7,18 @@
 
 void pi_init(PlatformInput* platform_input)
 {
-    u32 key_index;
-    for (key_index = 0; key_index < GLFW_KEY_LAST + 1; ++key_index)
+    int key;
+    for (key = 0; key < GLFW_KEY_LAST + 1; ++key)
     {
-        platform_input->current_key_array[key_index] = false;
-        platform_input->previous_key_array[key_index] = false;
+        platform_input->current_key_array[key] = false;
+        platform_input->previous_key_array[key] = false;
     }
 
-    u32 mouse_button_index;
-    for (mouse_button_index = 0; mouse_button_index < GLFW_MOUSE_BUTTON_LAST + 1; ++mouse_button_index)
+    int button;
+    for (button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
     {
-        platform_input->current_mouse_array[mouse_button_index] = false;
-        platform_input->previous_mouse_array[mouse_button_index] = false;
+        platform_input->current_mouse_array[button] = false;
+        platform_input->previous_mouse_array[button] = false;
     }
 
     platform_input->current_mouse_x = 0.0;
@@ -33,20 +33,15 @@ void p_poll_events(PlatformInput* platform_input, PlatformWindow* platform_windo
 {
     glfwPollEvents();
 
-    p_record_inputs(platform_input, platform_window);
-}
-
-void p_handle_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
-{
-    if (platform_input->current_key_array[GLFW_KEY_ESCAPE])
+    if (glfwWindowShouldClose(platform_window->glfw_window))
     {
-        glfwSetWindowShouldClose(platform_window->handle, GLFW_TRUE);
+        platform_window->close_requested = true;
     }
 }
 
 void p_record_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
 {
-    GLFWwindow* window = platform_window->handle;
+    GLFWwindow* window = platform_window->glfw_window;
 
     int key;
     for (key = 0; key < GLFW_KEY_LAST + 1; ++key)
@@ -70,4 +65,12 @@ void p_record_inputs(PlatformInput* platform_input, PlatformWindow* platform_win
         &platform_input->current_mouse_x,
         &platform_input->current_mouse_y
     );
+}
+
+void p_handle_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
+{
+    if (platform_input->current_key_array[GLFW_KEY_ESCAPE])
+    {
+        glfwSetWindowShouldClose(platform_window->glfw_window, GLFW_TRUE);
+    }
 }

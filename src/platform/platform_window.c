@@ -23,7 +23,7 @@ void pw_init(PlatformWindow* platform_window)
 
     const char* window_title = "Vulkan Test";
 
-    platform_window->handle = glfwCreateWindow(
+    platform_window->glfw_window = glfwCreateWindow(
         WINDOW_WIDTH, 
         WINDOW_HEIGHT, 
         window_title, 
@@ -31,7 +31,15 @@ void pw_init(PlatformWindow* platform_window)
         NULL
     );
 
-    if (platform_window->handle)
+    int width, height;
+    glfwGetFramebufferSize(platform_window->glfw_window, &width, &height);
+
+    platform_window->width  = (u32)width;
+    platform_window->height = (u32)height;
+
+    platform_window->close_requested = false;
+
+    if (platform_window->glfw_window)
     {
         LOG_INFO("GLFW window created");
     }

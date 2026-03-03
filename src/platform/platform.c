@@ -18,6 +18,7 @@ Platform* platform_create()
 void platform_update(Platform* platform)
 {
     p_poll_events(&platform->platform_input, &platform->platform_window);
+    p_record_inputs(&platform->platform_input, &platform->platform_window);
     p_handle_inputs(&platform->platform_input, &platform->platform_window);
 }
 
@@ -28,12 +29,12 @@ void platform_destroy(Platform* platform)
 
 boolean platform_is_active(Platform* platform)
 {
-    return !glfwWindowShouldClose(platform->platform_window.handle);
+    return !glfwWindowShouldClose(platform->platform_window.glfw_window);
 }
 
 void platform_window_destroy(Platform* platform) 
 {
-    glfwDestroyWindow(platform->platform_window.handle);
+    glfwDestroyWindow(platform->platform_window.glfw_window);
     glfwTerminate();
 }
 
@@ -44,7 +45,7 @@ VkSurfaceKHR platform_create_vulkan_surface(Platform* platform, VkInstance insta
     VkResult surface_result =
         glfwCreateWindowSurface(
             instance,
-            platform->platform_window.handle,
+            platform->platform_window.glfw_window,
             NULL,
             &surface
         );

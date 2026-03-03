@@ -1,10 +1,11 @@
 #include "app/app.h"
-#include "platform/platform.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #include "core/log.h"
+#include "platform/platform.h"
+#include "platform/platform_internal.h"
 #include "renderer/renderer.h"
 
 void app_init(App* app)
@@ -19,7 +20,7 @@ void app_init(App* app)
 
 void app_start(App* app)
 {
-    while (platform_is_active(app->platform))
+    while (!app->platform->platform_window.close_requested)
     {
         platform_update(app->platform);
         renderer_update(app->renderer);

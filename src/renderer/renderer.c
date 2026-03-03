@@ -14,6 +14,11 @@ static void r_init(Renderer* renderer, Platform* platform)
     renderer->vulkan_backend = vulkan_backend;
 }
 
+static void r_draw(Renderer* renderer)
+{
+    vulkan_backend_draw(renderer->vulkan_backend);
+}
+
 Renderer* renderer_create(Platform* platform)
 {
     Renderer* renderer = malloc(sizeof (Renderer));
@@ -26,11 +31,6 @@ Renderer* renderer_create(Platform* platform)
 void renderer_update(Renderer* renderer)
 {
     r_draw(renderer);
-}
-
-void r_draw(Renderer* renderer)
-{
-    vulkan_backend_draw(renderer->vulkan_backend);
 }
 
 void renderer_destroy(Renderer* renderer)

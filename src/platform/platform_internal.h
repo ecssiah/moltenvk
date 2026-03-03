@@ -24,10 +24,10 @@ struct PlatformInput
 
 struct PlatformWindow
 {
-    struct GLFWwindow* handle;
+    struct GLFWwindow* glfw_window;
     u32 width;
     u32 height;
-    boolean should_close;
+    boolean close_requested;
 };
 
 struct Platform
