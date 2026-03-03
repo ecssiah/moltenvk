@@ -1,9 +1,10 @@
-#include "core/log.h"
 #include "vulkan_backend_internal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <vulkan/vulkan.h>
+
+#include "core/log.h"
 
 VulkanBackend* vulkan_backend_create(PlatformWindow* window)
 {
