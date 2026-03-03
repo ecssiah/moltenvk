@@ -1,19 +1,13 @@
-#include "platform/platform.h"
+#include "platform/platform_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 
 #include "core/log.h"
-#include "platform/platform_internal.h"
 
-PlatformWindow* platform_window_create()
-{
-    PlatformWindow* platform_window = malloc(sizeof (PlatformWindow));
-
-    return platform_window;
-}
-
-void platform_window_init(PlatformWindow* window, const char* title)
+static void pw_init(PlatformWindow* platform_window, const char* title)
 {
     if (glfwInit())
     {
@@ -26,7 +20,7 @@ void platform_window_init(PlatformWindow* window, const char* title)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window->handle = glfwCreateWindow(
+    platform_window->handle = glfwCreateWindow(
         WINDOW_WIDTH, 
         WINDOW_HEIGHT, 
         title, 
@@ -34,7 +28,7 @@ void platform_window_init(PlatformWindow* window, const char* title)
         NULL
     );
 
-    if (window->handle)
+    if (platform_window->handle)
     {
         LOG_INFO("GLFW window created");
     }
@@ -42,8 +36,15 @@ void platform_window_init(PlatformWindow* window, const char* title)
     {
         LOG_FATAL("GLFW Failed to create window");
     }
+}
 
-    LOG_INFO("GLFW Vulkan supported: %d\n", glfwVulkanSupported());
+PlatformWindow* platform_window_create()
+{
+    PlatformWindow* platform_window = malloc(sizeof (PlatformWindow));
+
+    pw_init(platform_window, "Vulkan Test");
+
+    return platform_window;
 }
 
 boolean platform_window_should_close(PlatformWindow *window)
@@ -62,7 +63,7 @@ void platform_window_destroy(PlatformWindow *window)
     glfwTerminate();
 }
 
-VkSurfaceKHR pw_create_vulkan_surface(PlatformWindow *window, VkInstance instance)
+VkSurfaceKHR platform_window_create_vulkan_surface(PlatformWindow *window, VkInstance instance)
 {
     VkSurfaceKHR surface;
 

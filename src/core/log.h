@@ -1,5 +1,5 @@
-#ifndef LOG_H_
-#define LOG_H_ 1
+#ifndef LOG_H
+#define LOG_H 1
 
 #define LOG_TRACE(fmt, ...) log_message(LOG_LEVEL_TRACE, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...)  log_message(LOG_LEVEL_INFO,  __FILE__, __LINE__, fmt, ##__VA_ARGS__)

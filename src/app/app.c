@@ -8,9 +8,6 @@ void app_init(App* app)
     app->platform_window = platform_window_create();
     app->renderer = renderer_create(app->platform_window);
     
-    platform_window_init(app->platform_window, "Vulkan Test");
-    renderer_init(app->renderer, app->platform_window);
-    
     app->is_running = true;
 }
 

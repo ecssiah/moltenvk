@@ -1,9 +1,8 @@
 #ifndef PLATFORM_INTERNAL_H
 #define PLATFORM_INTERNAL_H 1
 
-#include <GLFW/glfw3.h>
-
 #include "core/types.h"
+#include "platform/platform.h"
 
 #define WINDOW_WIDTH    1024
 #define WINDOW_HEIGHT   768

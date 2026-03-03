@@ -1,7 +1,6 @@
 #ifndef VULKAN_BACKEND_INTERNAL_H
 #define VULKAN_BACKEND_INTERNAL_H 1
 
-#include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
 #include "core/types.h"

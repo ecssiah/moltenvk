@@ -1,19 +1,15 @@
-#include <GLFW/glfw3.h>
+#ifndef RENDERER_H
+#define RENDERER_H 1
 
 #include "platform/platform.h"
-#include "backend/vulkan/vulkan_backend.h"
 
 typedef struct Mesh Mesh;
 typedef struct Texture Texture;
 typedef struct Material Material;
-
-typedef struct 
-{
-    VulkanBackend* vulkan_backend;
-}
-Renderer;
+typedef struct Renderer Renderer;
 
 Renderer* renderer_create(PlatformWindow* platform_window);
-void renderer_init(Renderer* Renderer, PlatformWindow* window);
 void renderer_draw(Renderer* Renderer);
 void renderer_destroy(Renderer* Renderer);
+
+#endif

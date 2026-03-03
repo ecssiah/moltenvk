@@ -1,27 +1,17 @@
+#include "core/log.h"
 #include "vulkan_backend_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 
-void vulkan_backend_draw(VulkanBackend* vulkan_backend)
-{
-    vb_render_frame(vulkan_backend);
-}
-
 void vb_create_instance(VulkanBackend* vulkan_backend)
 {
-    printf("1\n");
-
     u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
 
-    printf("2\n");
-
     const char** required_extension_array = malloc(sizeof (const char*) * (extension_count + 1));
     
-    printf("Extension Count: %d\n", extension_count);
-
     u32 extension_index;
     for (extension_index = 0; extension_index < extension_count; ++extension_index)
     {
@@ -60,9 +50,7 @@ void vb_create_instance(VulkanBackend* vulkan_backend)
     {
         free(required_extension_array);
 
-        fprintf(stderr, "Failed to create Vulkan instance\n");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to create Vulkan instance");
     }
 
     free(required_extension_array);
@@ -71,7 +59,7 @@ void vb_create_instance(VulkanBackend* vulkan_backend)
 void vb_create_surface(VulkanBackend* vulkan_backend, PlatformWindow* window)
 {
     vulkan_backend->vulkan_device_context.surface = 
-        pw_create_vulkan_surface(
+        platform_window_create_vulkan_surface(
             window, 
             vulkan_backend->vulkan_device_context.instance
         );
@@ -154,9 +142,7 @@ void vb_pick_physical_device(VulkanBackend* vulkan_backend)
 
     free(physical_device_array);
 
-    fprintf(stderr, "No suitable GPU found");
-
-    exit(EXIT_FAILURE);
+    LOG_FATAL("No suitable GPU found");
 }
 
 void vb_create_logical_device(VulkanBackend* vulkan_backend)
@@ -224,4 +210,9 @@ void vb_create_command_pool(VulkanBackend* vulkan_backend)
         NULL, 
         &vulkan_backend->vulkan_device_context.command_pool
     );
+}
+
+void vulkan_backend_draw(VulkanBackend* vulkan_backend)
+{
+    vb_render_frame(vulkan_backend);
 }

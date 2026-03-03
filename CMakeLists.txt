@@ -54,7 +54,7 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_pipeline.c
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_frame.c
     ${CMAKE_SOURCE_DIR}/src/backend/vulkan/vulkan_swapchain.c
-    ${CMAKE_SOURCE_DIR}/src/platform/window.c
+    ${CMAKE_SOURCE_DIR}/src/platform/platform_window.c
     ${CMAKE_SOURCE_DIR}/src/renderer/mesh.c
     ${CMAKE_SOURCE_DIR}/src/renderer/texture.c
     ${CMAKE_SOURCE_DIR}/src/renderer/renderer.c

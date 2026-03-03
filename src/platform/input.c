@@ -2,6 +2,6 @@
 
 typedef struct
 {
-
+    
 }
 PlatformInput;

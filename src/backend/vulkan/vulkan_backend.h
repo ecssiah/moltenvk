@@ -1,8 +1,6 @@
 #ifndef VULKAN_BACKEND_H
 #define VULKAN_BACKEND_H 1
 
-#include <vulkan/vulkan.h>
-
 #include "platform/platform.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
