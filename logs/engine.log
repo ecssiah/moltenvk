@@ -1,6 +1,0 @@
-[INFO] (platform_window.c:14) GLFW initialized
-[INFO] (platform_window.c:33) GLFW window created
-[INFO] (vulkan_backend.c:11) Creating Vulkan Backend
-[INFO] (vulkan_backend.c:23) Vulkan Device Initialized
-[INFO] (vulkan_backend.c:28) Vulkan Swapchain Initialized
-[INFO] (vulkan_backend.c:33) Vulkan Pipeline Initialized
