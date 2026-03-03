@@ -29,7 +29,22 @@ void pi_init(PlatformInput* platform_input)
     LOG_INFO("Platform Input initialized");
 }
 
-void pi_record_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
+void p_poll_events(PlatformInput* platform_input, PlatformWindow* platform_window)
+{
+    glfwPollEvents();
+
+    p_record_inputs(platform_input, platform_window);
+}
+
+void p_handle_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
+{
+    if (platform_input->current_key_array[GLFW_KEY_ESCAPE])
+    {
+        glfwSetWindowShouldClose(platform_window->handle, GLFW_TRUE);
+    }
+}
+
+void p_record_inputs(PlatformInput* platform_input, PlatformWindow* platform_window)
 {
     GLFWwindow* window = platform_window->handle;
 

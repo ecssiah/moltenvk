@@ -23,7 +23,12 @@ Renderer* renderer_create(Platform* platform)
     return renderer;
 }
 
-void renderer_draw(Renderer* renderer)
+void renderer_update(Renderer* renderer)
+{
+    r_draw(renderer);
+}
+
+void r_draw(Renderer* renderer)
 {
     vulkan_backend_draw(renderer->vulkan_backend);
 }

@@ -10,4 +10,6 @@ struct Renderer
     VulkanBackend* vulkan_backend;
 };
 
+void r_draw(struct Renderer* renderer);
+
 #endif

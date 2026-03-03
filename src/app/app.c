@@ -1,10 +1,11 @@
-#include "app.h"
+#include "app/app.h"
 #include "platform/platform.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #include "core/log.h"
+#include "renderer/renderer.h"
 
 void app_init(App* app)
 {
@@ -18,24 +19,17 @@ void app_init(App* app)
 
 void app_start(App* app)
 {
-    while (!platform_should_close(app->platform))
+    while (platform_is_active(app->platform))
     {
-        app_update(app);
+        platform_update(app->platform);
+        renderer_update(app->renderer);
     }
-}
-
-void app_update(App* app)
-{
-    platform_poll_events(app->platform);
-    platform_handle_inputs(app->platform);
-
-    renderer_draw(app->renderer);
 }
 
 void app_destroy(App* app) 
 {
-    renderer_destroy(app->renderer);
     platform_destroy(app->platform);
+    renderer_destroy(app->renderer);
 
     LOG_INFO("App Destroyed");
 }
