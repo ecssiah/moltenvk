@@ -79,9 +79,7 @@ void vd_pick_physical_device(VulkanBackend* vulkan_backend)
 
     if (device_count == 0)
     {
-        fprintf(stderr, "No Vulkan physical devices found\n");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("No Vulkan physical devices found");
     }
 
     VkPhysicalDevice* physical_device_array = malloc(sizeof (VkPhysicalDevice) * device_count);
@@ -184,9 +182,7 @@ void vd_create_logical_device(VulkanBackend* vulkan_backend)
 
     if (device_result != VK_SUCCESS)
     {
-        fprintf(stderr, "Failed to create Vulkan device");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to create Vulkan device");
     }
 
     vkGetDeviceQueue(

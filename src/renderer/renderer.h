@@ -3,6 +3,7 @@
 
 #include "platform/platform.h"
 
+typedef struct Vertex Vertex;
 typedef struct Image Image;
 typedef struct Mesh Mesh;
 typedef struct Texture Texture;

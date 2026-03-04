@@ -14,7 +14,7 @@ static void r_init(Renderer* renderer, Platform* platform)
     renderer->vulkan_backend = vulkan_backend;
 }
 
-static void r_draw(Renderer* renderer)
+static void r_render(Renderer* renderer)
 {
     vulkan_backend_render(renderer->vulkan_backend);
 }
@@ -30,7 +30,7 @@ Renderer* renderer_create(Platform* platform)
 
 void renderer_update(Renderer* renderer)
 {
-    r_draw(renderer);
+    r_render(renderer);
 }
 
 void renderer_destroy(Renderer* renderer)

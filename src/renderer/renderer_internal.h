@@ -5,6 +5,40 @@
 
 #include "backend/vulkan/vulkan_backend.h"
 
+struct Vertex
+{
+    f32 position[3];
+    f32 uv[2];
+};
+
+static const Vertex quad_vertex_array[] =
+{
+    {
+        {-0.5f, -0.5f, +0.0f}, 
+        {+0.0f, +1.0f}
+    },
+    {
+        {+0.5f, -0.5f, +0.0f}, 
+        {+1.0f, +1.0f}
+    },
+    {
+        {+0.5f, +0.5f, +0.0f}, 
+        {+1.0f, +0.0f}
+    },
+    {
+        {-0.5f, -0.5f, +0.0f}, 
+        {+0.0f, +1.0f}
+    },
+    {
+        {+0.5f, +0.5f, +0.0f}, 
+        {+1.0f, +0.0f}
+    },
+    {
+        {-0.5f, +0.5f, +0.0f}, 
+        {+0.0f, +0.0f}
+    },
+};
+
 struct Image
 {
     u32 width;
@@ -19,6 +53,6 @@ struct Renderer
 };
 
 static void r_init(struct Renderer* renderer, struct Platform* platform);
-static void r_draw(struct Renderer* renderer);
+static void r_render(struct Renderer* renderer);
 
 #endif

@@ -100,8 +100,35 @@ void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer com
         VK_PIPELINE_BIND_POINT_GRAPHICS, 
         vulkan_backend->voxel_pipeline_context.pipeline
     );
+
+    VkDeviceSize offset_array[] = {0};
+
+    vkCmdBindVertexBuffers(
+        command_buffer,
+        0,
+        1,
+        &vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        offset_array
+    );
+
+    vkCmdBindDescriptorSets(
+        command_buffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        vulkan_backend->voxel_pipeline_context.layout,
+        0,
+        1,
+        &vulkan_backend->voxel_pipeline_context.descriptor_set,
+        0,
+        NULL
+    );
     
-    vkCmdDraw(command_buffer, 3, 1, 0, 0);
+    vkCmdDraw(
+        command_buffer,
+        6,
+        1,
+        0,
+        0
+    );
 
     vkCmdEndRenderPass(command_buffer);
     vkEndCommandBuffer(command_buffer);

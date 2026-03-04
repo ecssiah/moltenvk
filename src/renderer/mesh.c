@@ -1,7 +1,2 @@
-#include "renderer/renderer.h"
+#include "renderer/renderer_internal.h"
 
-typedef struct {
-    float position[3];
-    float uv[2];
-}
-VertexData;

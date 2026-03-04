@@ -1,4 +1,5 @@
 #include "core/core.h"
+#include "core/log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,9 +10,7 @@ size_t c_read_file_binary(const char* filename, char** out_buffer)
 
     if (!file)
     {
-        fprintf(stderr, "Could not open: %s\n", filename);
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Could not open: %s", filename);
     }
 
     fseek(file, 0, SEEK_END);
@@ -24,9 +23,7 @@ size_t c_read_file_binary(const char* filename, char** out_buffer)
     {
         fclose(file);
 
-        fprintf(stderr, "Failed to allocate shader buffer\n");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to allocate shader buffer");
     }
 
     fread(buffer, 1, file_size, file);

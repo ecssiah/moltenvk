@@ -1,5 +1,4 @@
 #include "app/app.h"
-
 #include "core/log.h"
 
 int main()

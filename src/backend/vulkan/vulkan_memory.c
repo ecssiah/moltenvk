@@ -1,12 +1,32 @@
+#include "core/log.h"
 #include "vulkan_backend_internal.h"
 
+#include <string.h>
+#include "stb/stb_image.h"
 
 u32 vm_find_memory_type(
     VulkanBackend* vulkan_backend,
     u32 type_filter,
     VkMemoryPropertyFlags properties
 ) {
-    
+    VkPhysicalDeviceMemoryProperties mem_properties;
+
+    vkGetPhysicalDeviceMemoryProperties(
+        vulkan_backend->vulkan_device_context.physical_device,
+        &mem_properties
+    );
+
+    for (u32 i = 0; i < mem_properties.memoryTypeCount; i++)
+    {
+        if (
+            (type_filter & (1 << i)) &&
+            (mem_properties.memoryTypes[i].propertyFlags & properties) == properties
+        ) {
+            return i;
+        }
+    }
+
+    return UINT32_MAX;
 }
 
 void vm_create_buffer(
@@ -33,29 +53,22 @@ void vm_create_buffer(
     );
 
     VkMemoryRequirements mem_requirements;
+
     vkGetBufferMemoryRequirements(
         backend->vulkan_device_context.device,
         *buffer,
         &mem_requirements
     );
 
-    VkPhysicalDeviceMemoryProperties mem_properties;
-    vkGetPhysicalDeviceMemoryProperties(
-        backend->vulkan_device_context.physical_device,
-        &mem_properties
+    u32 memory_type_index = vm_find_memory_type(
+        backend,
+        mem_requirements.memoryTypeBits,
+        properties
     );
 
-    u32 memory_type_index = UINT32_MAX;
-    
-    for (u32 i = 0; i < mem_properties.memoryTypeCount; ++i)
+    if (memory_type_index == UINT32_MAX) 
     {
-        if (
-            (mem_requirements.memoryTypeBits & (1 << i)) &&
-            (mem_properties.memoryTypes[i].propertyFlags & properties) == properties
-        ) {
-            memory_type_index = i;
-            break;
-        }
+        LOG_FATAL("Failed to find suitable memory type for buffer");
     }
 
     VkMemoryAllocateInfo alloc_info = 
@@ -91,7 +104,71 @@ void vm_create_image(
     VkImage* image,
     VkDeviceMemory* memory
 ) {
+    VkImageCreateInfo image_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .extent = {
+            .width = width,
+            .height = height,
+            .depth = 1
+        },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .format = format,
+        .tiling = tiling,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .usage = usage,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
 
+    vkCreateImage(
+        vulkan_backend->vulkan_device_context.device,
+        &image_info,
+        NULL,
+        image
+    );
+
+    VkMemoryRequirements mem_requirements;
+
+    vkGetImageMemoryRequirements(
+        vulkan_backend->vulkan_device_context.device,
+        *image,
+        &mem_requirements
+    );
+
+    u32 memory_type_index = vm_find_memory_type(
+        vulkan_backend,
+        mem_requirements.memoryTypeBits,
+        properties
+    );
+
+    if (memory_type_index == UINT32_MAX) 
+    {
+        LOG_FATAL("Failed to find suitable memory type for image");
+    }
+
+    VkMemoryAllocateInfo alloc_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = mem_requirements.size,
+        .memoryTypeIndex = memory_type_index
+    };
+
+    vkAllocateMemory(
+        vulkan_backend->vulkan_device_context.device,
+        &alloc_info,
+        NULL,
+        memory
+    );
+
+    vkBindImageMemory(
+        vulkan_backend->vulkan_device_context.device,
+        *image,
+        *memory,
+        0
+    );
 }
 
 VkImageView vm_create_image_view(
@@ -99,10 +176,377 @@ VkImageView vm_create_image_view(
     VkImage image,
     VkFormat format
 ) {
+    VkImageViewCreateInfo view_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .components = {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
 
+    VkImageView image_view;
+
+    vkCreateImageView(
+        vulkan_backend->vulkan_device_context.device,
+        &view_info,
+        NULL,
+        &image_view
+    );
+
+    return image_view;
 }
 
 VkSampler vm_create_sampler(VulkanBackend* vulkan_backend)
 {
-    
+    VkSamplerCreateInfo sampler_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .anisotropyEnable = VK_TRUE,
+        .maxAnisotropy = 1.0f,
+        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        .unnormalizedCoordinates = VK_FALSE,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .mipLodBias = 0.0f,
+        .minLod = 0.0f,
+        .maxLod = 0.0f
+    };
+
+    VkSampler sampler;
+
+    vkCreateSampler(
+        vulkan_backend->vulkan_device_context.device,
+        &sampler_info,
+        NULL,
+        &sampler
+    );
+
+    return sampler;
+}
+
+void vm_transition_image_layout(
+    VulkanBackend* vulkan_backend,
+    VkImage image,
+    VkFormat format,
+    VkImageLayout old_layout,
+    VkImageLayout new_layout
+) {
+    VkCommandBuffer command_buffer = vc_begin_single_time_commands(vulkan_backend);
+
+    VkImageMemoryBarrier barrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .oldLayout = old_layout,
+        .newLayout = new_layout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = image,
+        .subresourceRange = {
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    if (new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+        if (
+            format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
+            format == VK_FORMAT_D24_UNORM_S8_UINT
+        ) {
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+    }
+    else
+    {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+    VkPipelineStageFlags source_stage;
+    VkPipelineStageFlags destination_stage;
+
+    if (
+        old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+    ) {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (
+        old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+        new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    ) {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else if (
+        old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    ) {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = 
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+    else
+    {
+        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    }
+
+    vkCmdPipelineBarrier(
+        command_buffer,
+        source_stage,
+        destination_stage,
+        0,
+        0,
+        NULL,
+        0,
+        NULL,
+        1,
+        &barrier
+    );
+
+    vc_end_single_time_commands(vulkan_backend, command_buffer);
+}
+
+void vm_copy_buffer(
+    VulkanBackend* vulkan_backend,
+    VkBuffer src_buffer,
+    VkBuffer dst_buffer,
+    VkDeviceSize size
+) {
+    VkCommandBuffer command_buffer = vc_begin_single_time_commands(vulkan_backend);
+
+    VkBufferCopy copy_region =
+    {
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size
+    };
+
+    vkCmdCopyBuffer(
+        command_buffer,
+        src_buffer,
+        dst_buffer,
+        1,
+        &copy_region
+    );
+
+    vc_end_single_time_commands(vulkan_backend, command_buffer);
+}
+
+void vm_copy_buffer_to_image(
+    VulkanBackend* vulkan_backend,
+    VkBuffer buffer,
+    VkImage image,
+    u32 width,
+    u32 height
+) {
+    VkCommandBuffer command_buffer = vc_begin_single_time_commands(vulkan_backend);
+
+    VkBufferImageCopy region =
+    {
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        },
+        .imageOffset = {
+            .x = 0,
+            .y = 0,
+            .z = 0
+        },
+        .imageExtent = {
+            .width = width,
+            .height = height,
+            .depth = 1
+        }
+    };
+
+    vkCmdCopyBufferToImage(
+        command_buffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region
+    );
+
+    vc_end_single_time_commands(vulkan_backend, command_buffer);
+}
+
+void vm_create_texture_from_pixels(
+    VulkanBackend* vulkan_backend,
+    const void* pixels,
+    u32 width,
+    u32 height,
+    VkImage* image,
+    VkDeviceMemory* image_memory,
+    VkImageView* image_view,
+    VkSampler* sampler
+) {
+    VkDeviceSize image_size = width * height * 4;
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_memory;
+
+    vm_create_buffer(
+        vulkan_backend,
+        image_size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &staging_buffer,
+        &staging_memory
+    );
+
+    void* data;
+    vkMapMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory,
+        0,
+        image_size,
+        0,
+        &data
+    );
+
+    memcpy(data, pixels, (size_t)image_size);
+
+    vkUnmapMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory
+    );
+
+    vm_create_image(
+        vulkan_backend,
+        width,
+        height,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        image,
+        image_memory
+    );
+
+    vm_transition_image_layout(
+        vulkan_backend,
+        *image,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+    );
+
+    vm_copy_buffer_to_image(
+        vulkan_backend,
+        staging_buffer,
+        *image,
+        width,
+        height
+    );
+
+    vm_transition_image_layout(
+        vulkan_backend,
+        *image,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    );
+
+    *image_view = vm_create_image_view(
+        vulkan_backend,
+        *image,
+        VK_FORMAT_R8G8B8A8_SRGB
+    );
+
+    *sampler = vm_create_sampler(vulkan_backend);
+
+    vkDestroyBuffer(
+        vulkan_backend->vulkan_device_context.device,
+        staging_buffer,
+        NULL
+    );
+
+    vkFreeMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory,
+        NULL
+    );
+}
+
+void vm_create_texture_from_file(
+    VulkanBackend* vulkan_backend,
+    const char* path,
+    VkImage* image,
+    VkDeviceMemory* image_memory,
+    VkImageView* image_view,
+    VkSampler* sampler
+) {
+    int width;
+    int height;
+    int channels;
+
+    stbi_set_flip_vertically_on_load(true);
+
+    stbi_uc* pixel_array = stbi_load(
+        path, 
+        &width, 
+        &height, 
+        &channels, 
+        STBI_rgb_alpha
+    );
+
+    if (!pixel_array) 
+    {
+        LOG_FATAL("Failed to load texture image: %s", path);
+        return;
+    }
+
+    vm_create_texture_from_pixels(
+        vulkan_backend,
+        pixel_array,
+        (u32)width,
+        (u32)height,
+        image,
+        image_memory,
+        image_view,
+        sampler
+    );
+
+    stbi_image_free(pixel_array);
 }

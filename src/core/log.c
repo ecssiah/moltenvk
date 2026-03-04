@@ -68,7 +68,8 @@ void log_message(
         line
     );
 
-    if (g_log_file && g_log_file != stderr) {
+    if (g_log_file && g_log_file != stderr) 
+    {
         fprintf(
             g_log_file, 
             "[%s] [%s] (%s:%d) ",

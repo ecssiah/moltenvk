@@ -1,3 +1,4 @@
+#include "core/log.h"
 #include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
@@ -90,9 +91,7 @@ void vs_create_swapchain(VulkanBackend* vulkan_backend)
 
     if (swapchain_result != VK_SUCCESS)
     {
-        fprintf(stderr, "Failed to create swapchain");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to create swapchain");
     }
 
     u32 image_count = 0;

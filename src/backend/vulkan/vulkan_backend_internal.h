@@ -1,3 +1,4 @@
+#include <vulkan/vulkan_core.h>
 #ifndef VULKAN_BACKEND_INTERNAL_H
 #define VULKAN_BACKEND_INTERNAL_H 1
 
@@ -43,6 +44,12 @@ struct VulkanPipelineContext
     VkRenderPass render_pass;
     VkPipelineLayout layout;
     VkPipeline pipeline;
+    VkDescriptorSetLayout descriptor_set_layout;
+    VkDescriptorPool descriptor_pool;
+    VkDescriptorSet descriptor_set;
+    VkBuffer vertex_buffer;
+    VkDeviceMemory vertex_memory;
+    VulkanTexture vulkan_texture;
 };
 
 struct VulkanFrame
@@ -102,6 +109,12 @@ void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend);
 void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend);
 VkShaderModule vp_create_shader_module(VkDevice device, const char* filename);
 
+void vp_update_texture_descriptor(
+    VulkanBackend* vulkan_backend,
+    VkImageView image_view,
+    VkSampler sampler
+);
+
 // VULKAN FRAME
 
 void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index);
@@ -144,6 +157,49 @@ VkImageView vm_create_image_view(
 );
 
 VkSampler vm_create_sampler(VulkanBackend* vulkan_backend);
+
+void vm_transition_image_layout(
+    VulkanBackend* vulkan_backend,
+    VkImage image,
+    VkFormat format,
+    VkImageLayout old_layout,
+    VkImageLayout new_layout
+);
+
+void vm_copy_buffer(
+    VulkanBackend* vulkan_backend,
+    VkBuffer src_buffer,
+    VkBuffer dst_buffer,
+    VkDeviceSize size
+);
+
+void vm_copy_buffer_to_image(
+    VulkanBackend* vulkan_backend,
+    VkBuffer buffer,
+    VkImage image,
+    u32 width,
+    u32 height
+);
+
+void vm_create_texture_from_pixels(
+    VulkanBackend* vulkan_backend,
+    const void* pixels,
+    u32 width,
+    u32 height,
+    VkImage* image,
+    VkDeviceMemory* image_memory,
+    VkImageView* image_view,
+    VkSampler* sampler
+);
+
+void vm_create_texture_from_file(
+    VulkanBackend* vulkan_backend,
+    const char* path,
+    VkImage* image,
+    VkDeviceMemory* image_memory,
+    VkImageView* image_view,
+    VkSampler* sampler
+);
 
 // VULKAN COMMANDS
 

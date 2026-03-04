@@ -3,12 +3,31 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <vulkan/vulkan_core.h>
 
+#include "core/log.h"
 #include "core/core.h"
+#include "renderer/renderer_internal.h"
 
 void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend)
 {
     vp_create_graphics_pipeline(vulkan_backend);
+
+    vm_create_texture_from_file(
+        vulkan_backend,
+        "assets/textures/lion.png",
+        &vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
+        &vulkan_backend->voxel_pipeline_context.vulkan_texture.memory,
+        &vulkan_backend->voxel_pipeline_context.vulkan_texture.view,
+        &vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
+    );
+
+    vp_update_texture_descriptor(
+        vulkan_backend,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.view,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
+    );
 }
 
 void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
@@ -47,27 +66,99 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         .pSpecializationInfo = NULL,
     };
 
-    VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage_info, frag_stage_info};
+    VkPipelineShaderStageCreateInfo shader_stage_array[] = {vert_stage_info, frag_stage_info};
+
+    VkVertexInputBindingDescription vertex_input_binding =
+    {
+        .binding = 0,
+        .stride = sizeof(Vertex),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    VkVertexInputAttributeDescription vertex_input_attribute_array[2] =
+    {
+        {
+            .binding = 0,
+            .location = 0,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(Vertex, position)
+        },
+        {
+            .binding = 0,
+            .location = 1,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(Vertex, uv)
+        },
+    };
 
     VkPipelineVertexInputStateCreateInfo pipeline_vertex_input_state_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = NULL,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = NULL,
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &vertex_input_binding,
+        .vertexAttributeDescriptionCount = 2,
+        .pVertexAttributeDescriptions = vertex_input_attribute_array,
     };
 
     VkPipelineInputAssemblyStateCreateInfo pipeline_input_assembly_state_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_memory;
+
+    VkDeviceSize buffer_size = sizeof(quad_vertex_array);
+
+    vm_create_buffer(
+        vulkan_backend,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &staging_buffer,
+        &staging_memory
+    );
+
+    void* data;
+
+    vkMapMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory,
+        0,
+        buffer_size,
+        0,
+        &data
+    );
+
+    memcpy(data, quad_vertex_array, buffer_size);
+
+    vkUnmapMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory
+    );
+
+    vm_create_buffer(
+        vulkan_backend,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        &vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        &vulkan_backend->voxel_pipeline_context.vertex_memory
+    );
+
+    vm_copy_buffer(
+        vulkan_backend,
+        staging_buffer,
+        vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        buffer_size
+    );
+
+    vkDestroyBuffer(vulkan_backend->vulkan_device_context.device, staging_buffer, NULL);
+    vkFreeMemory(vulkan_backend->vulkan_device_context.device, staging_memory, NULL);
 
     VkViewport viewport =
     {
@@ -119,8 +210,6 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkPipelineMultisampleStateCreateInfo pipeline_multisampling_state_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
         .sampleShadingEnable = VK_FALSE,
         .minSampleShading = 0.0f,
@@ -148,18 +237,96 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkPipelineColorBlendStateCreateInfo pipeline_color_blend_state_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .logicOpEnable = 0,
-        .logicOp = 0,
         .attachmentCount = 1,
         .pAttachments = &pipeline_color_blend_attachment_state,
         .blendConstants = { 0, 0, 0, 0 },
     };
 
+    VkDescriptorSetLayoutBinding descriptor_set_layout_binding = 
+    {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+
+    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .bindingCount = 1,
+        .pBindings = &descriptor_set_layout_binding
+    };
+
+    VkResult descriptor_set_layout_result = 
+        vkCreateDescriptorSetLayout(
+            vulkan_backend->vulkan_device_context.device,
+            &descriptor_set_layout_info,
+            NULL,
+            &vulkan_backend->voxel_pipeline_context.descriptor_set_layout
+        );
+
+    if (descriptor_set_layout_result != VK_SUCCESS)
+    {
+        LOG_FATAL("Failed to create descriptor set layout");
+    }
+
+    VkDescriptorPoolSize pool_size =
+    {
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 64
+    };
+
+    VkDescriptorPoolCreateInfo pool_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .maxSets = 64,
+        .poolSizeCount = 1,
+        .pPoolSizes = &pool_size
+    };
+
+    VkResult descriptor_pool_result =
+        vkCreateDescriptorPool(
+            vulkan_backend->vulkan_device_context.device,
+            &pool_info,
+            NULL,
+            &vulkan_backend->voxel_pipeline_context.descriptor_pool
+        );
+
+    if (descriptor_pool_result != VK_SUCCESS)
+    {
+        LOG_FATAL("Failed to create descriptor pool");
+    }
+
+    VkDescriptorSetAllocateInfo alloc_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = vulkan_backend->voxel_pipeline_context.descriptor_pool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &vulkan_backend->voxel_pipeline_context.descriptor_set_layout
+    };
+
+    VkResult descriptor_set_result =
+        vkAllocateDescriptorSets(
+            vulkan_backend->vulkan_device_context.device,
+            &alloc_info,
+            &vulkan_backend->voxel_pipeline_context.descriptor_set
+        );
+
+    if (descriptor_set_result != VK_SUCCESS)
+    {
+        LOG_FATAL("Failed to allocate descriptor set");
+    }
+
     VkPipelineLayoutCreateInfo pipeline_layout_info = 
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
     };
 
     VkResult pipeline_layout_result = 
@@ -172,27 +339,20 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 
     if (pipeline_layout_result != VK_SUCCESS) 
     {
-        fprintf(stderr, "Failed to create Vulkan Pipeline layout\n");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to create Vulkan Pipeline layout");
     }
 
     VkGraphicsPipelineCreateInfo graphics_pipeline_info = 
     {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .stageCount = 2,
-        .pStages = shader_stages,
+        .pStages = shader_stage_array,
         .pVertexInputState = &pipeline_vertex_input_state_info,
         .pInputAssemblyState = &pipeline_input_assembly_state_info,
-        .pTessellationState = NULL,
         .pViewportState = &pipeline_viewport_state_info,
         .pRasterizationState = &pipeline_rasterization_state_info,
         .pMultisampleState = &pipeline_multisampling_state_info,
-        .pDepthStencilState = NULL,
         .pColorBlendState = &pipeline_color_blend_state_info,
-        .pDynamicState = NULL,
         .layout = vulkan_backend->voxel_pipeline_context.layout,
         .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
         .subpass = 0,
@@ -212,9 +372,7 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 
     if (graphics_pipeline_result != VK_SUCCESS) 
     {
-        fprintf(stderr, "Failed to create Vulkan graphics pipeline\n");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to create Vulkan graphics pipeline");
     }
 
     vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, frag_module, NULL);
@@ -249,12 +407,44 @@ VkShaderModule vp_create_shader_module(VkDevice device, const char* filename)
     {
         free(shader_src);
 
-        fprintf(stderr, "Failed to create shader module\n");
-
-        exit(EXIT_FAILURE);
+        LOG_FATAL("Failed to create shader module");
     }
 
     free(shader_src);
 
     return shader_module;
+}
+
+void vp_update_texture_descriptor(
+    VulkanBackend* vulkan_backend,
+    VkImageView image_view,
+    VkSampler sampler
+) {
+    VkDescriptorImageInfo image_info =
+    {
+        .sampler = vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
+        .imageView = vulkan_backend->voxel_pipeline_context.vulkan_texture.view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkWriteDescriptorSet write =
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = vulkan_backend->voxel_pipeline_context.descriptor_set,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .pImageInfo = &image_info,
+        .pBufferInfo = NULL,
+        .pTexelBufferView = NULL
+    };
+
+    vkUpdateDescriptorSets(
+        vulkan_backend->vulkan_device_context.device,
+        1,
+        &write,
+        0,
+        NULL
+    );
 }
