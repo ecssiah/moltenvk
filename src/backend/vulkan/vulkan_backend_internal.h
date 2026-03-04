@@ -11,8 +11,8 @@
 struct VulkanTexture
 {
     VkImage image;
-    VkDeviceMemory memory;
-    VkImageView view;
+    VkImageView image_view;
+    VkDeviceMemory image_memory;
     VkSampler sampler;
 
     u32 width;

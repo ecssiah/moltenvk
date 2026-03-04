@@ -18,14 +18,14 @@ void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend)
         vulkan_backend,
         "assets/textures/lion.png",
         &vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
-        &vulkan_backend->voxel_pipeline_context.vulkan_texture.memory,
-        &vulkan_backend->voxel_pipeline_context.vulkan_texture.view,
+        &vulkan_backend->voxel_pipeline_context.vulkan_texture.image_memory,
+        &vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
         &vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
     );
 
     vp_update_texture_descriptor(
         vulkan_backend,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.view,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
         vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
     );
 }
@@ -423,11 +423,11 @@ void vp_update_texture_descriptor(
     VkDescriptorImageInfo image_info =
     {
         .sampler = vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
-        .imageView = vulkan_backend->voxel_pipeline_context.vulkan_texture.view,
+        .imageView = vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
-    VkWriteDescriptorSet write =
+    VkWriteDescriptorSet write_descriptor_set =
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = vulkan_backend->voxel_pipeline_context.descriptor_set,
@@ -436,14 +436,12 @@ void vp_update_texture_descriptor(
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .descriptorCount = 1,
         .pImageInfo = &image_info,
-        .pBufferInfo = NULL,
-        .pTexelBufferView = NULL
     };
 
     vkUpdateDescriptorSets(
         vulkan_backend->vulkan_device_context.device,
         1,
-        &write,
+        &write_descriptor_set,
         0,
         NULL
     );

@@ -24,14 +24,14 @@ static u32 get_world_size_in_sectors()
 
 static u32 get_world_area_in_sectors()
 {
-    u32 world_size_in_sectors = get_world_size_in_sectors();
+    const u32 world_size_in_sectors = get_world_size_in_sectors();
 
     return world_size_in_sectors * world_size_in_sectors;
 }
 
 static u32 get_world_volume_in_sectors()
 {
-    u32 world_size_in_sectors = get_world_size_in_sectors();
+    const u32 world_size_in_sectors = get_world_size_in_sectors();
 
     return world_size_in_sectors * world_size_in_sectors * world_size_in_sectors;
 }
@@ -43,14 +43,14 @@ static u32 get_sector_size_in_cells()
 
 static u32 get_sector_area_in_cells()
 {
-    u32 sector_size_in_cells = get_sector_size_in_cells();
+    const u32 sector_size_in_cells = get_sector_size_in_cells();
 
     return sector_size_in_cells * sector_size_in_cells;
 }
 
 static u32 get_sector_volume_in_cells()
 {
-    u32 sector_size_in_cells = get_sector_area_in_cells();
+    const u32 sector_size_in_cells = get_sector_size_in_cells();
 
     return sector_size_in_cells * sector_size_in_cells * sector_size_in_cells;
 }
@@ -67,14 +67,14 @@ static f32 get_cell_size()
 
 static f32 get_cell_area()
 {
-    f32 cell_size = get_cell_size();
+    const f32 cell_size = get_cell_size();
 
     return cell_size * cell_size;
 }
 
 static f32 get_cell_volume()
 {
-    f32 cell_size = get_cell_size();
+    const f32 cell_size = get_cell_size();
 
     return cell_size * cell_size * cell_size;
 }
@@ -91,36 +91,36 @@ static bool cell_index_is_valid(CellIndex cell_index)
 
 static bool sector_coordinate_is_valid(SectorCoordinate sector_coordinate)
 {
-    bool in_x_range = sector_coordinate[0] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[0] <= WORLD_RADIUS_IN_SECTORS;
-    bool in_y_range = sector_coordinate[1] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[1] <= WORLD_RADIUS_IN_SECTORS;
-    bool in_z_range = sector_coordinate[2] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[2] <= WORLD_RADIUS_IN_SECTORS;
+    const bool in_x_range = sector_coordinate[0] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[0] <= WORLD_RADIUS_IN_SECTORS;
+    const bool in_y_range = sector_coordinate[1] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[1] <= WORLD_RADIUS_IN_SECTORS;
+    const bool in_z_range = sector_coordinate[2] >= -WORLD_RADIUS_IN_SECTORS && sector_coordinate[2] <= WORLD_RADIUS_IN_SECTORS;
 
     return in_x_range && in_y_range && in_z_range;
 }
 
 static bool cell_coordinate_is_valid(CellCoordinate cell_coordinate)
 {
-    bool in_x_range = cell_coordinate[0] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[0] <= SECTOR_RADIUS_IN_CELLS;
-    bool in_y_range = cell_coordinate[1] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[1] <= SECTOR_RADIUS_IN_CELLS;
-    bool in_z_range = cell_coordinate[2] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[2] <= SECTOR_RADIUS_IN_CELLS;
+    const bool in_x_range = cell_coordinate[0] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[0] <= SECTOR_RADIUS_IN_CELLS;
+    const bool in_y_range = cell_coordinate[1] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[1] <= SECTOR_RADIUS_IN_CELLS;
+    const bool in_z_range = cell_coordinate[2] >= -SECTOR_RADIUS_IN_CELLS && cell_coordinate[2] <= SECTOR_RADIUS_IN_CELLS;
 
     return in_x_range && in_y_range && in_z_range;
 }
 
 static bool grid_coordinate_is_valid(GridCoordinate grid_coordinate)
 {
-    u32 world_radius_in_cells = get_world_radius_in_cells();
+    const u32 world_radius_in_cells = get_world_radius_in_cells();
 
-    bool in_x_range = grid_coordinate[0] >= -world_radius_in_cells && grid_coordinate[0] <= world_radius_in_cells;
-    bool in_y_range = grid_coordinate[1] >= -world_radius_in_cells && grid_coordinate[1] <= world_radius_in_cells;
-    bool in_z_range = grid_coordinate[2] >= -world_radius_in_cells && grid_coordinate[2] <= world_radius_in_cells;
+    const bool in_x_range = grid_coordinate[0] >= -world_radius_in_cells && grid_coordinate[0] <= world_radius_in_cells;
+    const bool in_y_range = grid_coordinate[1] >= -world_radius_in_cells && grid_coordinate[1] <= world_radius_in_cells;
+    const bool in_z_range = grid_coordinate[2] >= -world_radius_in_cells && grid_coordinate[2] <= world_radius_in_cells;
 
     return in_x_range && in_y_range && in_z_range;
 }
 
 static void grid_coordinate_to_world_position(GridCoordinate grid_coordinate, vec3 out_world_position)
 {
-    f32 cell_size = get_cell_size();
+    const f32 cell_size = get_cell_size();
 
     out_world_position[0] = (f32)grid_coordinate[0] * cell_size;
     out_world_position[1] = (f32)grid_coordinate[1] * cell_size;
@@ -129,8 +129,8 @@ static void grid_coordinate_to_world_position(GridCoordinate grid_coordinate, ve
 
 static void sector_index_to_sector_coordinate(SectorIndex sector_index, SectorCoordinate out_sector_coordinate)
 {
-    u32 world_area_in_sectors = get_world_area_in_sectors();
-    u32 world_size_in_sectors = get_world_size_in_sectors();
+    const u32 world_area_in_sectors = get_world_area_in_sectors();
+    const u32 world_size_in_sectors = get_world_size_in_sectors();
 
     out_sector_coordinate[0] = sector_index % world_size_in_sectors;
     out_sector_coordinate[1] = (sector_index / world_size_in_sectors) % world_size_in_sectors;
@@ -159,8 +159,8 @@ static void sector_coordinate_to_grid_coordinate(SectorCoordinate sector_coordin
 
 static void cell_index_to_cell_coordinate(CellIndex cell_index, CellCoordinate out_cell_coordinate)
 {
-    u32 sector_area_in_cells = get_sector_area_in_cells();
-    u32 sector_size_in_cells = get_sector_size_in_cells();
+    const u32 sector_area_in_cells = get_sector_area_in_cells();
+    const u32 sector_size_in_cells = get_sector_size_in_cells();
 
     out_cell_coordinate[0] = cell_index % sector_size_in_cells;
     out_cell_coordinate[1] = (cell_index / sector_size_in_cells) % sector_size_in_cells;
@@ -195,7 +195,7 @@ static void grid_coordinate_to_sector_coordinate(GridCoordinate grid_coordinate,
 
 static void grid_coordinate_to_cell_coordinate(GridCoordinate grid_coordinate, CellCoordinate out_cell_coordinate)
 {
-    u32 sector_size_in_cells = get_sector_size_in_cells();
+    const u32 sector_size_in_cells = get_sector_size_in_cells();
 
     GridCoordinate grid_coordinate_indexable;
     glm_ivec3_adds(grid_coordinate, get_world_radius_in_cells(), grid_coordinate_indexable);
