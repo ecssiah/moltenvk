@@ -1,15 +1,15 @@
-#include "core/log.h"
 #include "vulkan_backend_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 
+#include "core/log.h"
+
 void vd_create_instance(VulkanBackend* vulkan_backend)
 {
     u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
-
     const char** required_extension_array = malloc(sizeof (const char*) * (extension_count + 1));
     
     for (u32 extension_index = 0; extension_index < extension_count; ++extension_index)
@@ -19,12 +19,15 @@ void vd_create_instance(VulkanBackend* vulkan_backend)
 
     required_extension_array[extension_count] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
 
-    VkApplicationInfo application_info = {
+    const char* application_name = "Vulkan Test";
+    const char* engine_name = "Vulkan Test Engine";
+
+    VkApplicationInfo application_info = 
+    {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pNext = NULL,
-        .pApplicationName = "Vulkan Test",
+        .pApplicationName = application_name,
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-        .pEngineName = "Vulkan Test Engine",
+        .pEngineName = engine_name,
         .engineVersion = VK_MAKE_VERSION(1, 0, 0),
         .apiVersion = VK_API_VERSION_1_2,
     };
@@ -32,11 +35,9 @@ void vd_create_instance(VulkanBackend* vulkan_backend)
     VkInstanceCreateInfo instance_create_info =
     {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .pNext = NULL,
         .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
         .pApplicationInfo = &application_info,
         .enabledLayerCount = 0,
-        .ppEnabledLayerNames = NULL,
         .enabledExtensionCount = extension_count + 1,
         .ppEnabledExtensionNames = required_extension_array,
     };
@@ -145,12 +146,10 @@ void vd_pick_physical_device(VulkanBackend* vulkan_backend)
 
 void vd_create_logical_device(VulkanBackend* vulkan_backend)
 {
-    f32 queue_priority = 1.0f;
+    const f32 queue_priority = 1.0f;
 
     VkDeviceQueueCreateInfo device_queue_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index,
         .queueCount = 1,
         .pQueuePriorities = &queue_priority,
@@ -161,12 +160,9 @@ void vd_create_logical_device(VulkanBackend* vulkan_backend)
     VkDeviceCreateInfo device_info = 
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &device_queue_info,
         .enabledLayerCount = 0,
-        .ppEnabledLayerNames = NULL,
         .enabledExtensionCount = 1,
         .ppEnabledExtensionNames = extension_array,
         .pEnabledFeatures = NULL,
@@ -200,7 +196,6 @@ void vd_create_command_pool(VulkanBackend* vulkan_backend)
     VkCommandPoolCreateInfo command_pool_info = 
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = NULL,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index,
     };

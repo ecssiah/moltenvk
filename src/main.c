@@ -1,7 +1,7 @@
 #include "app/app.h"
 #include "core/log.h"
 
-int main()
+int main(int argc, char** argv)
 {
     log_init("logs/engine.log");
 

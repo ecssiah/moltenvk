@@ -11,7 +11,20 @@ struct Vertex
     f32 uv[2];
 };
 
-static const Vertex quad_vertex_array[] =
+struct Image
+{
+    u32 width;
+    u32 height;
+    u32 channels;
+    u8* pixels;
+};
+
+struct Renderer
+{
+    VulkanBackend* vulkan_backend;
+};
+
+static const Vertex quad_vertex_array[6] =
 {
     {
         {-0.5f, -0.5f, +0.0f}, 
@@ -37,19 +50,6 @@ static const Vertex quad_vertex_array[] =
         {-0.5f, +0.5f, +0.0f}, 
         {+0.0f, +0.0f}
     },
-};
-
-struct Image
-{
-    u32 width;
-    u32 height;
-    u32 channels;
-    u8* pixels;
-};
-
-struct Renderer
-{
-    VulkanBackend* vulkan_backend;
 };
 
 static void r_init(struct Renderer* renderer, struct Platform* platform);
