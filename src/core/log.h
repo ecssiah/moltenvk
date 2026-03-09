@@ -17,7 +17,7 @@ typedef enum
 } 
 LogLevel;
 
-void log_init(const char* filepath);
+void log_init();
 
 void log_message(
     LogLevel level,

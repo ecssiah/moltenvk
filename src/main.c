@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv)
 {
-    log_init("logs/engine.log");
+    log_init();
 
     App app = 
     {
