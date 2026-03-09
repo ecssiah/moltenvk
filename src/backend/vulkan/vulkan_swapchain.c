@@ -11,6 +11,7 @@ void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend)
     vulkan_backend_create_swapchain(vulkan_backend);
     vulkan_backend_create_image_views(vulkan_backend);
     vulkan_backend_create_render_pass(vulkan_backend);
+    vulkan_backend_create_depth_resources(vulkan_backend);
     vulkan_backend_create_frame_buffers(vulkan_backend);
 }
 
@@ -163,7 +164,6 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
 {
     VkAttachmentDescription color_attachment =
     {
-        .flags = 0,
         .format = vulkan_backend->vulkan_swapchain_context.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -174,10 +174,28 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
 
-    VkAttachmentReference attachment_reference =
+    VkAttachmentDescription depth_attachment =
+    {
+        .format = VK_FORMAT_D32_SFLOAT,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+
+    VkAttachmentReference color_ref =
     {
         .attachment = 0,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    VkAttachmentReference depth_ref =
+    {
+        .attachment = 1,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
 
     VkSubpassDescription subpass_description =
@@ -187,20 +205,22 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
         .inputAttachmentCount = 0,
         .pInputAttachments = NULL,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &attachment_reference,
+        .pColorAttachments = &color_ref,
         .pResolveAttachments = NULL,
-        .pDepthStencilAttachment = NULL,
+        .pDepthStencilAttachment = &depth_ref,
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = NULL,
     };
+
+    VkAttachmentDescription attachments[2] = { color_attachment, depth_attachment };
 
     VkRenderPassCreateInfo render_pass_info =
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .attachmentCount = 1,
-        .pAttachments = &color_attachment,
+        .attachmentCount = 2,
+        .pAttachments = attachments,
         .subpassCount = 1,
         .pSubpasses = &subpass_description,
         .dependencyCount = 0,
@@ -215,18 +235,107 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
     );
 }
 
+void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend)
+{
+    VkFormat depth_format = VK_FORMAT_D32_SFLOAT;
+
+    VkImageCreateInfo image_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .extent =
+        {
+            vulkan_backend->vulkan_swapchain_context.extent.width,
+            vulkan_backend->vulkan_swapchain_context.extent.height,
+            1
+        },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .format = depth_format,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    };
+
+    vkCreateImage(
+        vulkan_backend->vulkan_device_context.device,
+        &image_info,
+        NULL,
+        &vulkan_backend->vulkan_swapchain_context.depth_image
+    );
+
+    VkMemoryRequirements mem_requirements;
+    vkGetImageMemoryRequirements(
+        vulkan_backend->vulkan_device_context.device,
+        vulkan_backend->vulkan_swapchain_context.depth_image,
+        &mem_requirements
+    );
+
+    VkMemoryAllocateInfo alloc_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = mem_requirements.size,
+        .memoryTypeIndex = 0
+    };
+
+    vkAllocateMemory(
+        vulkan_backend->vulkan_device_context.device,
+        &alloc_info,
+        NULL,
+        &vulkan_backend->vulkan_swapchain_context.depth_memory
+    );
+
+    vkBindImageMemory(
+        vulkan_backend->vulkan_device_context.device,
+        vulkan_backend->vulkan_swapchain_context.depth_image,
+        vulkan_backend->vulkan_swapchain_context.depth_memory,
+        0
+    );
+
+    VkImageViewCreateInfo view_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = vulkan_backend->vulkan_swapchain_context.depth_image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = depth_format,
+        .subresourceRange =
+        {
+            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    vkCreateImageView(
+        vulkan_backend->vulkan_device_context.device,
+        &view_info,
+        NULL,
+        &vulkan_backend->vulkan_swapchain_context.depth_image_view
+    );
+}
+
 void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend)
 {
     for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
     {
+        VkImageView attachments[2] =
+        {
+            vulkan_backend->vulkan_swapchain_context.image_view_array[image_index],
+            vulkan_backend->vulkan_swapchain_context.depth_image_view
+        };
+
         VkFramebufferCreateInfo framebuffer_info =
         {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .pNext = NULL,
             .flags = 0,
             .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
-            .attachmentCount = 1,
-            .pAttachments = &vulkan_backend->vulkan_swapchain_context.image_view_array[image_index],
+            .attachmentCount = 2,
+            .pAttachments = attachments,
             .width = vulkan_backend->vulkan_swapchain_context.extent.width,
             .height = vulkan_backend->vulkan_swapchain_context.extent.height,
             .layers = 1,
@@ -257,6 +366,24 @@ void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend)
             NULL
         );
     }
+
+    vkDestroyImageView(
+        vulkan_backend->vulkan_device_context.device,
+        vulkan_backend->vulkan_swapchain_context.depth_image_view,
+        NULL
+    );
+
+    vkDestroyImage(
+        vulkan_backend->vulkan_device_context.device,
+        vulkan_backend->vulkan_swapchain_context.depth_image,
+        NULL
+    );
+
+    vkFreeMemory(
+        vulkan_backend->vulkan_device_context.device,
+        vulkan_backend->vulkan_swapchain_context.depth_memory,
+        NULL
+    );
 
     free(vulkan_backend->vulkan_swapchain_context.image_array);
     free(vulkan_backend->vulkan_swapchain_context.image_view_array);

@@ -11,7 +11,8 @@ int main(int argc, char** argv)
 
     LOG_INFO("Starting App");
 
-    app_start(app);
+    app_run(app);
+    
     app_destroy(app);
 
     log_shutdown();

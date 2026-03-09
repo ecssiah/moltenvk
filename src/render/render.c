@@ -7,6 +7,8 @@
 #include "platform/platform.h"
 #include "backend/vulkan/vulkan_backend.h"
 
+static void render_draw(Render* render);
+
 Render* render_create()
 {
     Render* render = malloc(sizeof(*render));
@@ -25,14 +27,16 @@ void render_destroy(Render* render)
     vulkan_backend_destroy(render->vulkan_backend);
 
     render->vulkan_backend = NULL;
-}
 
-void render_draw(Render* render)
-{
-    vulkan_backend_render(render->vulkan_backend);
+    free(render);
 }
 
 void render_update(Render* render)
 {
     render_draw(render);
+}
+
+static void render_draw(Render* render)
+{
+    vulkan_backend_draw(render->vulkan_backend);
 }

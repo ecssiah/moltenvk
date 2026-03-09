@@ -14,6 +14,5 @@ void render_init(Render* render, Platform* platform);
 void render_destroy(Render* render);
 
 void render_update(Render* render);
-void render_draw(Render* render);
 
 #endif

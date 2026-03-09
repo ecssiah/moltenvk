@@ -11,7 +11,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
 
 find_program(GLSLC glslc REQUIRED)
 
@@ -85,7 +84,6 @@ target_link_libraries(
     PRIVATE
     Vulkan::Vulkan
     glfw
-    glm::glm
 )
 
 add_custom_command(

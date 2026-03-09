@@ -17,9 +17,9 @@ typedef struct Platform Platform;
 typedef struct Image Image;
 
 VulkanBackend* vulkan_backend_create(Platform* platform);
-void vulkan_backend_render(VulkanBackend* backend);
-void vulkan_backend_destroy(VulkanBackend* backend);
+void vulkan_backend_init(VulkanBackend* vulkan_backend);
+void vulkan_backend_destroy(VulkanBackend* vulkan_backend);
 
-void vulkan_backend_create_texture_from_image(VulkanBackend* backend, Image* image);
+void vulkan_backend_draw(VulkanBackend* vulkan_backend);
 
 #endif

@@ -1,6 +1,8 @@
 #include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
+#include <cglm/cglm.h>
+
 void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend)
 {
     VkCommandBufferAllocateInfo command_buffer_allocate_info =
@@ -68,16 +70,16 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
 
     vkBeginCommandBuffer(command_buffer, &command_buffer_info);
 
-    VkClearValue clear_color =
-    {
-        .color = { 0.1f, 0.1f, 0.2f, 1.0f },
-    };
-
     VkRect2D render_area = 
     {
         .offset = {0, 0},
         .extent = vulkan_backend->vulkan_swapchain_context.extent,
     };
+
+    VkClearValue clear_values[2];
+
+    clear_values[0].color = (VkClearColorValue){{0.0f, 0.0f, 0.0f, 1.0f}};
+    clear_values[1].depthStencil = (VkClearDepthStencilValue){1.0f, 0};
 
     VkRenderPassBeginInfo render_pass_begin_info =
     {
@@ -85,8 +87,8 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
         .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
         .framebuffer = vulkan_backend->vulkan_swapchain_context.framebuffer_array[image_index],
         .renderArea = render_area,
-        .clearValueCount = 1,
-        .pClearValues = &clear_color,
+        .clearValueCount = 2,
+        .pClearValues = clear_values
     };
 
     vkCmdBeginRenderPass(
@@ -100,6 +102,26 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
         VK_PIPELINE_BIND_POINT_GRAPHICS, 
         vulkan_backend->voxel_pipeline_context.pipeline
     );
+
+    VkViewport viewport =
+    {
+        .x = 0,
+        .y = 0,
+        .width  = (float)render_area.extent.width,
+        .height = (float)render_area.extent.height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+    };
+
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+    VkRect2D scissor =
+    {
+        .offset = {0, 0},
+        .extent = render_area.extent,
+    };
+
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
     VkDeviceSize offset_array[] = {0};
 
@@ -121,10 +143,22 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
         0,
         NULL
     );
+
+    PushConstants push_constants;
+    glm_mat4_identity(push_constants.projection_view_matrix);
+
+    vkCmdPushConstants(
+        command_buffer,
+        vulkan_backend->voxel_pipeline_context.layout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0,
+        sizeof(PushConstants),
+        &push_constants
+    );
     
     vkCmdDraw(
         command_buffer,
-        6,
+        36,
         1,
         0,
         0

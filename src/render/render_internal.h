@@ -3,6 +3,7 @@
 
 #include "render/render.h"
 
+#include <cglm/cglm.h>
 #include <vulkan/vulkan.h>
 
 #include "core/types.h"
@@ -10,8 +11,8 @@
 
 struct Vertex
 {
-    f32 position[3];
-    f32 uv[2];
+    vec3 position;
+    vec2 uv;
 };
 
 struct Image
@@ -27,32 +28,57 @@ struct Render
     VulkanBackend* vulkan_backend;
 };
 
-static const Vertex quad_vertex_array[6] =
+#define CUBE_RADIUS 0.5f
+
+static const Vertex cube_vertex_array[] =
 {
-    {
-        {-0.5f, -0.5f, +0.0f}, 
-        {+0.0f, +1.0f}
-    },
-    {
-        {+0.5f, -0.5f, +0.0f}, 
-        {+1.0f, +1.0f}
-    },
-    {
-        {+0.5f, +0.5f, +0.0f}, 
-        {+1.0f, +0.0f}
-    },
-    {
-        {-0.5f, -0.5f, +0.0f}, 
-        {+0.0f, +1.0f}
-    },
-    {
-        {+0.5f, +0.5f, +0.0f}, 
-        {+1.0f, +0.0f}
-    },
-    {
-        {-0.5f, +0.5f, +0.0f}, 
-        {+0.0f, +0.0f}
-    },
+    // +Z (front)
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
+
+    // -Z (back)
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +0.0f}},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +1.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +0.0f}},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS ,-CUBE_RADIUS}, { +1.0f, +1.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS ,-CUBE_RADIUS}, { +0.0f, +1.0f}},
+
+    // +X (right)
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f}},
+
+    // -X (left)
+    {{ -CUBE_RADIUS,-CUBE_RADIUS,-CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ -CUBE_RADIUS,-CUBE_RADIUS,+CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS,+CUBE_RADIUS,+CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS,-CUBE_RADIUS,-CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ -CUBE_RADIUS,+CUBE_RADIUS,+CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS,+CUBE_RADIUS,-CUBE_RADIUS }, { +0.0f, +1.0f }},
+
+    // +Y (top)
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
+
+    // -Y (bottom)
+    {{ -CUBE_RADIUS,-CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS,-CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS,-CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS,-CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS,-CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS,-CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
 };
 
 Image render_image_load(const char* path);

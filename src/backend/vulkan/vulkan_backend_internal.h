@@ -3,6 +3,7 @@
 #define VULKAN_BACKEND_INTERNAL_H 1
 
 #include <vulkan/vulkan.h>
+#include <cglm/cglm.h>
 
 #include "core/types.h"
 #include "platform/platform.h"
@@ -34,7 +35,7 @@ struct VulkanSwapchainContext
     VkFormat depth_format;
     VkImage depth_image;
     VkDeviceMemory depth_memory;
-    VkImageView depth_view;
+    VkImageView depth_image_view;
 
     VkFramebuffer* framebuffer_array;
 };
@@ -86,6 +87,12 @@ struct VulkanBackend
     VulkanDeviceContext vulkan_device_context;
 };
 
+typedef struct PushConstants
+{
+    mat4 projection_view_matrix;
+} 
+PushConstants;
+
 // VULKAN DEVICE
 
 void vulkan_backend_create_instance(VulkanBackend* vulkan_backend);
@@ -102,6 +109,7 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend);
 void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend);
 void vulkan_backend_create_image_views(VulkanBackend* vulkan_backend);
 void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend);
 
 // VULKAN PIPELINE
 

@@ -36,7 +36,7 @@ void app_destroy(App* app)
     LOG_INFO("App Destroyed");
 }
 
-void app_start(App* app)
+void app_run(App* app)
 {
     while (platform_is_active(app->platform))
     {

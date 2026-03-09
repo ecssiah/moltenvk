@@ -1,3 +1,4 @@
+#include "backend/vulkan/vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
 #include <stdio.h>
@@ -36,9 +37,9 @@ VulkanBackend* vulkan_backend_create(Platform* platform)
     return vulkan_backend;
 }
 
-void vulkan_backend_render(VulkanBackend* vulkan_backend)
+void vulkan_backend_init(VulkanBackend* vulkan_backend)
 {
-    vulkan_backend_draw_frame(vulkan_backend);
+    
 }
 
 void vulkan_backend_destroy(VulkanBackend* vulkan_backend)
@@ -68,7 +69,7 @@ void vulkan_backend_destroy(VulkanBackend* vulkan_backend)
     free(vulkan_backend);
 }
 
-void vulkan_backend_create_texture_from_image(VulkanBackend* backend, Image* image)
+void vulkan_backend_draw(VulkanBackend* vulkan_backend)
 {
-
+    vulkan_backend_draw_frame(vulkan_backend);
 }

@@ -80,7 +80,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         {
             .binding = 0,
             .location = 0,
-            .format = VK_FORMAT_R32G32_SFLOAT,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = offsetof(Vertex, position)
         },
         {
@@ -110,7 +110,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkBuffer staging_buffer;
     VkDeviceMemory staging_memory;
 
-    VkDeviceSize buffer_size = sizeof(quad_vertex_array);
+    VkDeviceSize buffer_size = sizeof(cube_vertex_array);
 
     vulkan_backend_create_buffer(
         vulkan_backend,
@@ -133,7 +133,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         &data
     );
 
-    memcpy(data, quad_vertex_array, buffer_size);
+    memcpy(data, cube_vertex_array, buffer_size);
 
     vkUnmapMemory(
         vulkan_backend->vulkan_device_context.device,
@@ -182,24 +182,33 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkPipelineViewportStateCreateInfo pipeline_viewport_state_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .viewportCount = 1,
         .pViewports = &viewport,
         .scissorCount = 1,
         .pScissors = &scissor_rect,
     };
 
+    VkDynamicState dynamic_states[] =
+    {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR
+    };
+
+    VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = 2,
+        .pDynamicStates = dynamic_states,
+    };
+
     VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
         .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
         .depthBiasConstantFactor = 0.0f,
         .depthBiasClamp = 0.0f,
@@ -213,9 +222,20 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
         .sampleShadingEnable = VK_FALSE,
         .minSampleShading = 0.0f,
-        .pSampleMask = NULL,
         .alphaToCoverageEnable = VK_FALSE,
         .alphaToOneEnable = VK_FALSE,
+    };
+
+    VkPipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .minDepthBounds = 0.0f,
+        .maxDepthBounds = 1.0f,
     };
 
     VkPipelineColorBlendAttachmentState pipeline_color_blend_attachment_state =
@@ -322,11 +342,20 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         LOG_FATAL("Failed to allocate descriptor set");
     }
 
+    VkPushConstantRange push_constant_range =
+    {
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof(PushConstants),
+    };
+
     VkPipelineLayoutCreateInfo pipeline_layout_info = 
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
         .pSetLayouts = &vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &push_constant_range,
     };
 
     VkResult pipeline_layout_result = 
@@ -352,7 +381,9 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         .pViewportState = &pipeline_viewport_state_info,
         .pRasterizationState = &pipeline_rasterization_state_info,
         .pMultisampleState = &pipeline_multisampling_state_info,
+        .pDepthStencilState = &pipeline_depth_stencil_state_info,
         .pColorBlendState = &pipeline_color_blend_state_info,
+        .pDynamicState = &pipeline_dynamic_state_info,
         .layout = vulkan_backend->voxel_pipeline_context.layout,
         .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
         .subpass = 0,
