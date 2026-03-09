@@ -1,10 +1,10 @@
 #include "core/core.h"
-#include "core/log.h"
+#include "core/log/log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-size_t c_read_file_binary(const char* filename, char** out_buffer)
+size_t read_file_binary(const char* filename, char** out_buffer)
 {
     FILE* file = fopen(filename, "rb");
 

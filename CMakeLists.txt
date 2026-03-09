@@ -51,7 +51,7 @@ target_sources(
     src/main.c
     src/app/app.c
     src/core/file.c
-    src/core/log.c
+    src/core/log/log.c
     src/backend/vulkan/vulkan_commands.c
     src/backend/vulkan/vulkan_memory.c
     src/backend/vulkan/vulkan_device.c
@@ -61,11 +61,10 @@ target_sources(
     src/backend/vulkan/vulkan_backend.c
     src/platform/platform.c
     src/platform/platform_input.c
-    src/platform/platform_window.c
-    src/renderer/image.c
-    src/renderer/mesh.c
-    src/renderer/texture.c
-    src/renderer/renderer.c
+    src/render/image.c
+    src/render/mesh.c
+    src/render/texture.c
+    src/render/render.c
     external/stb/stb_image_loader.c
 )
 

@@ -1,7 +1,7 @@
 #include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
-void vf_create_frame_context(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend)
 {
     VkCommandBufferAllocateInfo command_buffer_allocate_info =
     {
@@ -59,7 +59,7 @@ void vf_create_frame_context(VulkanBackend* vulkan_backend)
     }
 }
 
-void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index)
+void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index)
 {
     VkCommandBufferBeginInfo command_buffer_info = 
     {
@@ -134,7 +134,7 @@ void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer com
     vkEndCommandBuffer(command_buffer);
 }
 
-void vf_render_frame(VulkanBackend* vulkan_backend)
+void vulkan_backend_draw_frame(VulkanBackend* vulkan_backend)
 {
     VulkanFrame* frame = &vulkan_backend->vulkan_frame_context.frame_array[vulkan_backend->vulkan_frame_context.frame_index];
 
@@ -160,7 +160,7 @@ void vf_render_frame(VulkanBackend* vulkan_backend)
     vkResetFences(vulkan_backend->vulkan_device_context.device, 1, &frame->in_flight);
     vkResetCommandBuffer(frame->command_buffer, 0);
 
-    vf_record_command_buffer(vulkan_backend, frame->command_buffer, image_index);
+    vulkan_backend_record_command_buffer(vulkan_backend, frame->command_buffer, image_index);
 
     VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 

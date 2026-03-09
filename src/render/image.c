@@ -3,10 +3,10 @@
 #include "stb/stb_image.h"
 
 #include "core/types.h"
-#include "renderer/renderer.h"
-#include "renderer/renderer_internal.h"
+#include "render/render.h"
+#include "render/render_internal.h"
 
-Image image_load(const char* path)
+Image render_image_load(const char* path)
 {
     Image image;
 
@@ -39,7 +39,7 @@ Image image_load(const char* path)
     return image;
 }
 
-void image_destroy(Image* image)
+void render_image_destroy(Image* image)
 {
     if (image->pixels)
     {

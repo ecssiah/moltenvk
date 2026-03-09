@@ -1,37 +1,46 @@
 #include "app/app.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "core/log.h"
+#include "core/log/log.h"
+#include "render/render.h"
 #include "platform/platform.h"
-#include "platform/platform_internal.h"
-#include "renderer/renderer.h"
-#include "renderer/renderer_internal.h"
+
+App* app_create()
+{
+    App* app = malloc(sizeof (*app));
+
+    app->platform = platform_create();
+    app->render = render_create();
+
+    return app;
+}
 
 void app_init(App* app)
 {
-    app->platform = platform_create();
-    app->renderer = renderer_create(app->platform);
-    
     app->is_running = true;
 
-    LOG_INFO("App Initialized");
-}
+    platform_init(app->platform);
+    render_init(app->render, app->platform);
 
-void app_start(App* app)
-{
-    while (!app->platform->platform_window.close_requested)
-    {
-        platform_update(app->platform);
-        renderer_update(app->renderer);
-    }
+    LOG_INFO("App Initialized");
 }
 
 void app_destroy(App* app) 
 {
     platform_destroy(app->platform);
-    renderer_destroy(app->renderer);
+    render_destroy(app->render);
 
     LOG_INFO("App Destroyed");
+}
+
+void app_start(App* app)
+{
+    while (platform_is_active(app->platform))
+    {
+        platform_update(app->platform);
+        render_update(app->render);
+    }
 }

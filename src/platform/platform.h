@@ -1,15 +1,16 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H 1
 
-#include <vulkan/vulkan.h>
+#include <stdbool.h>
 
-#include "core/types.h"
+#include <vulkan/vulkan.h>
 
 typedef struct PlatformInput PlatformInput;
 typedef struct PlatformWindow PlatformWindow;
 typedef struct Platform Platform;
 
 Platform* platform_create();
+void platform_init(Platform* platform);
 void platform_update(Platform* platform);
 void platform_destroy(Platform* platform);
 

@@ -1,6 +1,6 @@
 #include "vulkan_backend_internal.h"
 
-VkCommandBuffer vc_begin_single_time_commands(VulkanBackend* backend)
+VkCommandBuffer vulkan_backend_begin_single_time_commands(VulkanBackend* backend)
 {
     VkCommandBufferAllocateInfo alloc_info = 
     {
@@ -29,7 +29,7 @@ VkCommandBuffer vc_begin_single_time_commands(VulkanBackend* backend)
     return command_buffer;
 }
 
-void vc_end_single_time_commands(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer)
+void vulkan_backend_end_single_time_commands(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer)
 {
     vkEndCommandBuffer(command_buffer);
 

@@ -1,10 +1,10 @@
-#include "core/log.h"
+#include "core/log/log.h"
 #include "vulkan_backend_internal.h"
 
 #include <string.h>
 #include "stb/stb_image.h"
 
-u32 vm_find_memory_type(
+u32 vulkan_backend_locate_memory_type(
     VulkanBackend* vulkan_backend,
     u32 type_filter,
     VkMemoryPropertyFlags properties
@@ -29,7 +29,7 @@ u32 vm_find_memory_type(
     return UINT32_MAX;
 }
 
-void vm_create_buffer(
+void vulkan_backend_create_buffer(
     VulkanBackend* backend,
     VkDeviceSize size,
     VkBufferUsageFlags usage,
@@ -60,7 +60,7 @@ void vm_create_buffer(
         &mem_requirements
     );
 
-    u32 memory_type_index = vm_find_memory_type(
+    u32 memory_type_index = vulkan_backend_locate_memory_type(
         backend,
         mem_requirements.memoryTypeBits,
         properties
@@ -93,7 +93,7 @@ void vm_create_buffer(
     );
 }
 
-void vm_create_image(
+void vulkan_backend_create_image(
     VulkanBackend* vulkan_backend,
     u32 width,
     u32 height,
@@ -138,7 +138,7 @@ void vm_create_image(
         &mem_requirements
     );
 
-    u32 memory_type_index = vm_find_memory_type(
+    u32 memory_type_index = vulkan_backend_locate_memory_type(
         vulkan_backend,
         mem_requirements.memoryTypeBits,
         properties
@@ -171,7 +171,7 @@ void vm_create_image(
     );
 }
 
-VkImageView vm_create_image_view(
+VkImageView vulkan_backend_create_image_view(
     VulkanBackend* vulkan_backend,
     VkImage image,
     VkFormat format
@@ -209,7 +209,7 @@ VkImageView vm_create_image_view(
     return image_view;
 }
 
-VkSampler vm_create_sampler(VulkanBackend* vulkan_backend)
+VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
 {
     VkSamplerCreateInfo sampler_info =
     {
@@ -243,14 +243,14 @@ VkSampler vm_create_sampler(VulkanBackend* vulkan_backend)
     return sampler;
 }
 
-void vm_transition_image_layout(
+void vulkan_backend_transition_image_layout(
     VulkanBackend* vulkan_backend,
     VkImage image,
     VkFormat format,
     VkImageLayout old_layout,
     VkImageLayout new_layout
 ) {
-    VkCommandBuffer command_buffer = vc_begin_single_time_commands(vulkan_backend);
+    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(vulkan_backend);
 
     VkImageMemoryBarrier barrier =
     {
@@ -338,16 +338,16 @@ void vm_transition_image_layout(
         &barrier
     );
 
-    vc_end_single_time_commands(vulkan_backend, command_buffer);
+    vulkan_backend_end_single_time_commands(vulkan_backend, command_buffer);
 }
 
-void vm_copy_buffer(
+void vulkan_backend_copy_buffer(
     VulkanBackend* vulkan_backend,
     VkBuffer src_buffer,
     VkBuffer dst_buffer,
     VkDeviceSize size
 ) {
-    VkCommandBuffer command_buffer = vc_begin_single_time_commands(vulkan_backend);
+    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(vulkan_backend);
 
     VkBufferCopy copy_region =
     {
@@ -364,17 +364,17 @@ void vm_copy_buffer(
         &copy_region
     );
 
-    vc_end_single_time_commands(vulkan_backend, command_buffer);
+    vulkan_backend_end_single_time_commands(vulkan_backend, command_buffer);
 }
 
-void vm_copy_buffer_to_image(
+void vulkan_backend_copy_buffer_to_image(
     VulkanBackend* vulkan_backend,
     VkBuffer buffer,
     VkImage image,
     u32 width,
     u32 height
 ) {
-    VkCommandBuffer command_buffer = vc_begin_single_time_commands(vulkan_backend);
+    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(vulkan_backend);
 
     VkBufferImageCopy region =
     {
@@ -408,10 +408,10 @@ void vm_copy_buffer_to_image(
         &region
     );
 
-    vc_end_single_time_commands(vulkan_backend, command_buffer);
+    vulkan_backend_end_single_time_commands(vulkan_backend, command_buffer);
 }
 
-void vm_create_texture_from_pixels(
+void vulkan_backend_create_texture_from_pixels(
     VulkanBackend* vulkan_backend,
     const void* pixels,
     u32 width,
@@ -426,7 +426,7 @@ void vm_create_texture_from_pixels(
     VkBuffer staging_buffer;
     VkDeviceMemory staging_memory;
 
-    vm_create_buffer(
+    vulkan_backend_create_buffer(
         vulkan_backend,
         image_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -452,7 +452,7 @@ void vm_create_texture_from_pixels(
         staging_memory
     );
 
-    vm_create_image(
+    vulkan_backend_create_image(
         vulkan_backend,
         width,
         height,
@@ -464,7 +464,7 @@ void vm_create_texture_from_pixels(
         image_memory
     );
 
-    vm_transition_image_layout(
+    vulkan_backend_transition_image_layout(
         vulkan_backend,
         *image,
         VK_FORMAT_R8G8B8A8_SRGB,
@@ -472,7 +472,7 @@ void vm_create_texture_from_pixels(
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
     );
 
-    vm_copy_buffer_to_image(
+    vulkan_backend_copy_buffer_to_image(
         vulkan_backend,
         staging_buffer,
         *image,
@@ -480,7 +480,7 @@ void vm_create_texture_from_pixels(
         height
     );
 
-    vm_transition_image_layout(
+    vulkan_backend_transition_image_layout(
         vulkan_backend,
         *image,
         VK_FORMAT_R8G8B8A8_SRGB,
@@ -488,13 +488,13 @@ void vm_create_texture_from_pixels(
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     );
 
-    *image_view = vm_create_image_view(
+    *image_view = vulkan_backend_create_image_view(
         vulkan_backend,
         *image,
         VK_FORMAT_R8G8B8A8_SRGB
     );
 
-    *sampler = vm_create_sampler(vulkan_backend);
+    *sampler = vulkan_backend_create_sampler(vulkan_backend);
 
     vkDestroyBuffer(
         vulkan_backend->vulkan_device_context.device,
@@ -509,7 +509,7 @@ void vm_create_texture_from_pixels(
     );
 }
 
-void vm_create_texture_from_file(
+void vulkan_backend_create_texture_from_file(
     VulkanBackend* vulkan_backend,
     const char* path,
     VkImage* image,
@@ -537,7 +537,7 @@ void vm_create_texture_from_file(
         return;
     }
 
-    vm_create_texture_from_pixels(
+    vulkan_backend_create_texture_from_pixels(
         vulkan_backend,
         pixel_array,
         (u32)width,

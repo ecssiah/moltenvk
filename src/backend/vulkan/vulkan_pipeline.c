@@ -6,15 +6,15 @@
 #include <string.h>
 #include <vulkan/vulkan_core.h>
 
-#include "core/log.h"
 #include "core/core.h"
-#include "renderer/renderer_internal.h"
+#include "core/log/log.h"
+#include "render/render_internal.h"
 
-void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
 {
-    vp_create_graphics_pipeline(vulkan_backend);
+    vulkan_backend_create_graphics_pipeline(vulkan_backend);
 
-    vm_create_texture_from_file(
+    vulkan_backend_create_texture_from_file(
         vulkan_backend,
         "assets/textures/lion.png",
         &vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
@@ -23,23 +23,23 @@ void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend)
         &vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
     );
 
-    vp_update_texture_descriptor(
+    vulkan_backend_update_texture_descriptor(
         vulkan_backend,
         vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
         vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
     );
 }
 
-void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 {
     VkShaderModule vert_module = 
-        vp_create_shader_module(
+        vulkan_backend_create_shader_module(
             vulkan_backend->vulkan_device_context.device, 
             "assets/shaders/bin/test.vert.spv"
         );
 
     VkShaderModule frag_module = 
-        vp_create_shader_module(
+        vulkan_backend_create_shader_module(
             vulkan_backend->vulkan_device_context.device, 
             "assets/shaders/bin/test.frag.spv"
         );
@@ -112,7 +112,7 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 
     VkDeviceSize buffer_size = sizeof(quad_vertex_array);
 
-    vm_create_buffer(
+    vulkan_backend_create_buffer(
         vulkan_backend,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -140,7 +140,7 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         staging_memory
     );
 
-    vm_create_buffer(
+    vulkan_backend_create_buffer(
         vulkan_backend,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -150,7 +150,7 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         &vulkan_backend->voxel_pipeline_context.vertex_memory
     );
 
-    vm_copy_buffer(
+    vulkan_backend_copy_buffer(
         vulkan_backend,
         staging_buffer,
         vulkan_backend->voxel_pipeline_context.vertex_buffer,
@@ -379,10 +379,10 @@ void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, vert_module, NULL);
 }
 
-VkShaderModule vp_create_shader_module(VkDevice device, const char* filename)
+VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* filename)
 {
     char* shader_src = NULL;
-    size_t shader_src_size = c_read_file_binary(filename, &shader_src);
+    size_t shader_src_size = read_file_binary(filename, &shader_src);
 
     VkShaderModuleCreateInfo shader_module_info =
     {
@@ -415,7 +415,7 @@ VkShaderModule vp_create_shader_module(VkDevice device, const char* filename)
     return shader_module;
 }
 
-void vp_update_texture_descriptor(
+void vulkan_backend_update_texture_descriptor(
     VulkanBackend* vulkan_backend,
     VkImageView image_view,
     VkSampler sampler

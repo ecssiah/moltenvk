@@ -1,6 +1,8 @@
 #ifndef PLATFORM_INTERNAL_H
 #define PLATFORM_INTERNAL_H 1
 
+#include "platform/platform.h"
+
 #include <GLFW/glfw3.h>
 
 #include "core/types.h"
@@ -25,6 +27,7 @@ struct PlatformInput
 struct PlatformWindow
 {
     struct GLFWwindow* glfw_window;
+
     u32 width;
     u32 height;
     bool close_requested;
@@ -36,12 +39,8 @@ struct Platform
     struct PlatformWindow platform_window;
 };
 
-void pi_init(struct PlatformInput* platform_input);
-void pw_init(struct PlatformWindow* platform_window);
-
-void p_record_inputs(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
-
-void p_poll_events(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
-void p_handle_inputs(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
+void platform_poll_events(struct PlatformWindow* platform_window);
+void platform_record_input(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
+void platform_handle_input(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
 
 #endif

@@ -4,32 +4,32 @@
 #include <stdlib.h>
 #include <vulkan/vulkan.h>
 
-#include "core/log.h"
+#include "core/log/log.h"
 
 VulkanBackend* vulkan_backend_create(Platform* platform)
 {
-    VulkanBackend* vulkan_backend = malloc(sizeof (VulkanBackend));
+    VulkanBackend* vulkan_backend = malloc(sizeof(*vulkan_backend));
 
     // Device lifetime
-    vd_create_instance(vulkan_backend);
-    vd_create_surface(vulkan_backend, platform);
-    vd_pick_physical_device(vulkan_backend);
-    vd_create_logical_device(vulkan_backend);
-    vd_create_command_pool(vulkan_backend);
+    vulkan_backend_create_instance(vulkan_backend);
+    vulkan_backend_create_surface(vulkan_backend, platform);
+    vulkan_backend_choose_physical_device(vulkan_backend);
+    vulkan_backend_create_logical_device(vulkan_backend);
+    vulkan_backend_create_command_pool(vulkan_backend);
 
     LOG_INFO("Vulkan Device Initialized");
 
     // Swapchain lifetime
-    vs_create_swapchain_context(vulkan_backend);
+    vulkan_backend_create_swapchain_context(vulkan_backend);
 
     LOG_INFO("Vulkan Swapchain Initialized");
 
     // Engine resources
-    vp_create_voxel_pipeline(vulkan_backend);
+    vulkan_backend_create_voxel_pipeline(vulkan_backend);
 
     LOG_INFO("Vulkan Pipeline Initialized");
 
-    vf_create_frame_context(vulkan_backend);
+    vulkan_backend_create_fame_context(vulkan_backend);
 
     LOG_INFO("Vulkan Frame Initialized");
 
@@ -38,14 +38,14 @@ VulkanBackend* vulkan_backend_create(Platform* platform)
 
 void vulkan_backend_render(VulkanBackend* vulkan_backend)
 {
-    vf_render_frame(vulkan_backend);
+    vulkan_backend_draw_frame(vulkan_backend);
 }
 
 void vulkan_backend_destroy(VulkanBackend* vulkan_backend)
 {
     vkDeviceWaitIdle(vulkan_backend->vulkan_device_context.device);
 
-    vs_destroy_swapchain_context(vulkan_backend);
+    vulkan_backend_destroy_swapchain_context(vulkan_backend);
 
     for (u32 frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {

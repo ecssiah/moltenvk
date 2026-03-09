@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <GLFW/glfw3.h>
 
-#include "core/log.h"
+#include "core/log/log.h"
 
-void vd_create_instance(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_instance(VulkanBackend* vulkan_backend)
 {
     u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
@@ -59,7 +59,7 @@ void vd_create_instance(VulkanBackend* vulkan_backend)
     free(required_extension_array);
 }
 
-void vd_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
+void vulkan_backend_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
 {
     vulkan_backend->vulkan_device_context.surface = 
         platform_create_vulkan_surface(
@@ -68,7 +68,7 @@ void vd_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
         );
 }
 
-void vd_pick_physical_device(VulkanBackend* vulkan_backend)
+void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend)
 {
     u32 device_count = 0;
 
@@ -144,7 +144,7 @@ void vd_pick_physical_device(VulkanBackend* vulkan_backend)
     LOG_FATAL("No suitable GPU found");
 }
 
-void vd_create_logical_device(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend)
 {
     const f32 queue_priority = 1.0f;
 
@@ -191,7 +191,7 @@ void vd_create_logical_device(VulkanBackend* vulkan_backend)
     vulkan_backend->vulkan_device_context.present_queue = vulkan_backend->vulkan_device_context.graphics_queue;
 }
 
-void vd_create_command_pool(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_command_pool(VulkanBackend* vulkan_backend)
 {
     VkCommandPoolCreateInfo command_pool_info = 
     {

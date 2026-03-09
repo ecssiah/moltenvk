@@ -1,4 +1,4 @@
-#include "core/log.h"
+#include "core/log/log.h"
 #include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
@@ -6,15 +6,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void vs_create_swapchain_context(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend)
 {
-    vs_create_swapchain(vulkan_backend);
-    vs_create_image_views(vulkan_backend);
-    vs_create_render_pass(vulkan_backend);
-    vs_create_frame_buffers(vulkan_backend);
+    vulkan_backend_create_swapchain(vulkan_backend);
+    vulkan_backend_create_image_views(vulkan_backend);
+    vulkan_backend_create_render_pass(vulkan_backend);
+    vulkan_backend_create_frame_buffers(vulkan_backend);
 }
 
-void vs_create_swapchain(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
 {
     VkSurfaceCapabilitiesKHR surface_capabilities;
 
@@ -117,9 +117,8 @@ void vs_create_swapchain(VulkanBackend* vulkan_backend)
     );
 }
 
-void vs_create_image_views(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_image_views(VulkanBackend* vulkan_backend)
 {
-    
     for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
     {
         VkComponentMapping component_mapping = 
@@ -160,7 +159,7 @@ void vs_create_image_views(VulkanBackend* vulkan_backend)
     }
 }
 
-void vs_create_render_pass(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
 {
     VkAttachmentDescription color_attachment =
     {
@@ -216,9 +215,8 @@ void vs_create_render_pass(VulkanBackend* vulkan_backend)
     );
 }
 
-void vs_create_frame_buffers(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend)
 {
-    
     for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
     {
         VkFramebufferCreateInfo framebuffer_info =
@@ -243,7 +241,7 @@ void vs_create_frame_buffers(VulkanBackend* vulkan_backend)
     }
 }
 
-void vs_destroy_swapchain_context(VulkanBackend* vulkan_backend)
+void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend)
 {
     for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
     {

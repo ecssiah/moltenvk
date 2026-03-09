@@ -88,28 +88,28 @@ struct VulkanBackend
 
 // VULKAN DEVICE
 
-void vd_create_instance(VulkanBackend* vulkan_backend);
-void vd_create_surface(VulkanBackend* vulkan_backend, Platform* platform);
-void vd_pick_physical_device(VulkanBackend* vulkan_backend);
-void vd_create_logical_device(VulkanBackend* vulkan_backend);
-void vd_create_command_pool(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_instance(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_surface(VulkanBackend* vulkan_backend, Platform* platform);
+void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_command_pool(VulkanBackend* vulkan_backend);
 
 // VULKAN SWAPCHAIN
 
-void vs_create_swapchain_context(VulkanBackend* vulkan_backend);
-void vs_destroy_swapchain_context(VulkanBackend* vulkan_backend);
-void vs_create_swapchain(VulkanBackend* vulkan_backend);
-void vs_create_frame_buffers(VulkanBackend* vulkan_backend);
-void vs_create_image_views(VulkanBackend* vulkan_backend);
-void vs_create_render_pass(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend);
+void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_image_views(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend);
 
 // VULKAN PIPELINE
 
-void vp_create_voxel_pipeline(VulkanBackend* vulkan_backend);
-void vp_create_graphics_pipeline(VulkanBackend* vulkan_backend);
-VkShaderModule vp_create_shader_module(VkDevice device, const char* filename);
+void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend);
+VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* filename);
 
-void vp_update_texture_descriptor(
+void vulkan_backend_update_texture_descriptor(
     VulkanBackend* vulkan_backend,
     VkImageView image_view,
     VkSampler sampler
@@ -117,19 +117,19 @@ void vp_update_texture_descriptor(
 
 // VULKAN FRAME
 
-void vf_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index);
-void vf_create_frame_context(VulkanBackend* vulkan_backend);
-void vf_render_frame(VulkanBackend* vulkan_backend);
+void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index);
+void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend);
+void vulkan_backend_draw_frame(VulkanBackend* vulkan_backend);
 
 // VULKAN MEMORY
 
-u32 vm_find_memory_type(
+u32 vulkan_backend_locate_memory_type(
     VulkanBackend* vulkan_backend,
     u32 type_filter,
     VkMemoryPropertyFlags properties
 );
 
-void vm_create_buffer(
+void vulkan_backend_create_buffer(
     VulkanBackend* vulkan_backend,
     VkDeviceSize size,
     VkBufferUsageFlags usage,
@@ -138,7 +138,7 @@ void vm_create_buffer(
     VkDeviceMemory* memory
 );
 
-void vm_create_image(
+void vulkan_backend_create_image(
     VulkanBackend* vulkan_backend,
     u32 width,
     u32 height,
@@ -150,15 +150,15 @@ void vm_create_image(
     VkDeviceMemory* memory
 );
 
-VkImageView vm_create_image_view(
+VkImageView vulkan_backend_create_image_view(
     VulkanBackend* vulkan_backend,
     VkImage image,
     VkFormat format
 );
 
-VkSampler vm_create_sampler(VulkanBackend* vulkan_backend);
+VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend);
 
-void vm_transition_image_layout(
+void vulkan_backend_transition_image_layout(
     VulkanBackend* vulkan_backend,
     VkImage image,
     VkFormat format,
@@ -166,14 +166,14 @@ void vm_transition_image_layout(
     VkImageLayout new_layout
 );
 
-void vm_copy_buffer(
+void vulkan_backend_copy_buffer(
     VulkanBackend* vulkan_backend,
     VkBuffer src_buffer,
     VkBuffer dst_buffer,
     VkDeviceSize size
 );
 
-void vm_copy_buffer_to_image(
+void vulkan_backend_copy_buffer_to_image(
     VulkanBackend* vulkan_backend,
     VkBuffer buffer,
     VkImage image,
@@ -181,7 +181,7 @@ void vm_copy_buffer_to_image(
     u32 height
 );
 
-void vm_create_texture_from_pixels(
+void vulkan_backend_create_texture_from_pixels(
     VulkanBackend* vulkan_backend,
     const void* pixels,
     u32 width,
@@ -192,7 +192,7 @@ void vm_create_texture_from_pixels(
     VkSampler* sampler
 );
 
-void vm_create_texture_from_file(
+void vulkan_backend_create_texture_from_file(
     VulkanBackend* vulkan_backend,
     const char* path,
     VkImage* image,
@@ -203,10 +203,10 @@ void vm_create_texture_from_file(
 
 // VULKAN COMMANDS
 
-VkCommandBuffer vc_begin_single_time_commands(VulkanBackend* backend);
-void vc_end_single_time_commands(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer);
+VkCommandBuffer vulkan_backend_begin_single_time_commands(VulkanBackend* backend);
+void vulkan_backend_end_single_time_commands(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer);
 
-void vc_copy_buffer_to_image(
+void vulkan_backend_copy_buffer_to_image(
     VulkanBackend* vulkan_backend,
     VkBuffer buffer,
     VkImage image,

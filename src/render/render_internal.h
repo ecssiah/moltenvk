@@ -1,8 +1,11 @@
-#ifndef RENDERER_INTERNAL_H
-#define RENDERER_INTERNAL_H 1
+#ifndef RENDER_INTERNAL_H
+#define RENDER_INTERNAL_H 1
+
+#include "render/render.h"
 
 #include <vulkan/vulkan.h>
 
+#include "core/types.h"
 #include "backend/vulkan/vulkan_backend.h"
 
 struct Vertex
@@ -19,7 +22,7 @@ struct Image
     u8* pixels;
 };
 
-struct Renderer
+struct Render
 {
     VulkanBackend* vulkan_backend;
 };
@@ -52,7 +55,7 @@ static const Vertex quad_vertex_array[6] =
     },
 };
 
-static void r_init(struct Renderer* renderer, struct Platform* platform);
-static void r_render(struct Renderer* renderer);
+Image render_image_load(const char* path);
+void render_image_destroy(Image* image);
 
 #endif
