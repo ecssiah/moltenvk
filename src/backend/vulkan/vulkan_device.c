@@ -1,10 +1,23 @@
+#include "backend/vulkan/vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan_core.h>
 
 #include "core/log/log.h"
+
+void vulkan_backend_create_device_context(VulkanBackend* vulkan_backend, Platform* platform)
+{
+    vulkan_backend_create_instance(vulkan_backend);
+    vulkan_backend_create_surface(vulkan_backend, platform);
+    vulkan_backend_choose_physical_device(vulkan_backend);
+    vulkan_backend_create_logical_device(vulkan_backend);
+    vulkan_backend_create_command_pool(vulkan_backend);
+
+    LOG_INFO("Vulkan Device Initialized");
+}
 
 void vulkan_backend_create_instance(VulkanBackend* vulkan_backend)
 {
@@ -32,12 +45,18 @@ void vulkan_backend_create_instance(VulkanBackend* vulkan_backend)
         .apiVersion = VK_API_VERSION_1_2,
     };
 
+    const char* layer_name_array[] =
+    {
+        // "VK_LAYER_KHRONOS_validation"
+    };
+
     VkInstanceCreateInfo instance_create_info =
     {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
         .pApplicationInfo = &application_info,
         .enabledLayerCount = 0,
+        .ppEnabledLayerNames = layer_name_array,
         .enabledExtensionCount = extension_count + 1,
         .ppEnabledExtensionNames = required_extension_array,
     };
@@ -155,7 +174,10 @@ void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend)
         .pQueuePriorities = &queue_priority,
     };
 
-    const char* extension_array[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    const char* extension_array[] = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        "VK_KHR_portability_subset"
+    };
 
     VkDeviceCreateInfo device_info = 
     {
@@ -163,9 +185,8 @@ void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend)
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &device_queue_info,
         .enabledLayerCount = 0,
-        .enabledExtensionCount = 1,
+        .enabledExtensionCount = 2,
         .ppEnabledExtensionNames = extension_array,
-        .pEnabledFeatures = NULL,
     };
 
     VkResult device_result = 
@@ -206,4 +227,15 @@ void vulkan_backend_create_command_pool(VulkanBackend* vulkan_backend)
         NULL, 
         &vulkan_backend->vulkan_device_context.command_pool
     );
+}
+
+void vulkan_backend_destroy_device_context(VulkanBackend* vulkan_backend)
+{
+    VkDevice device = vulkan_backend->vulkan_device_context.device;
+    VkInstance instance = vulkan_backend->vulkan_device_context.instance;
+
+    vkDestroyCommandPool(device, vulkan_backend->vulkan_device_context.command_pool, NULL);
+    vkDestroyDevice(device, NULL);
+    vkDestroySurfaceKHR(instance, vulkan_backend->vulkan_device_context.surface, NULL);
+    vkDestroyInstance(instance, NULL);
 }

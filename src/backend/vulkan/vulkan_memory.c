@@ -2,6 +2,7 @@
 #include "vulkan_backend_internal.h"
 
 #include <string.h>
+#include <vulkan/vulkan_core.h>
 #include "stb/stb_image.h"
 
 u32 vulkan_backend_locate_memory_type(
@@ -214,21 +215,27 @@ VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
     VkSamplerCreateInfo sampler_info =
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .magFilter = VK_FILTER_LINEAR,
-        .minFilter = VK_FILTER_LINEAR,
+
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+
         .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .anisotropyEnable = VK_TRUE,
-        .maxAnisotropy = 1.0f,
+        
+        .mipLodBias = 0.0f,
+        .anisotropyEnable = VK_FALSE,
+        .compareEnable = VK_FALSE,
+
+        .minLod = 0.0f,
+        .maxLod = 0.0f,
+
         .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
         .unnormalizedCoordinates = VK_FALSE,
-        .compareEnable = VK_FALSE,
+        
         .compareOp = VK_COMPARE_OP_ALWAYS,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-        .mipLodBias = 0.0f,
-        .minLod = 0.0f,
-        .maxLod = 0.0f
     };
 
     VkSampler sampler;

@@ -37,6 +37,7 @@ struct VulkanSwapchainContext
     VkDeviceMemory depth_memory;
     VkImageView depth_image_view;
 
+    VkSemaphore* render_finished_array;
     VkFramebuffer* framebuffer_array;
 };
 
@@ -57,7 +58,6 @@ struct VulkanFrame
 {
     VkCommandBuffer command_buffer;
     VkSemaphore image_available;
-    VkSemaphore render_finished;
     VkFence in_flight;
 };
 
@@ -95,6 +95,9 @@ PushConstants;
 
 // VULKAN DEVICE
 
+void vulkan_backend_create_device_context(VulkanBackend* vulkan_backend, Platform* platform);
+void vulkan_backend_destroy_device_context(VulkanBackend* vulkan_backend);
+
 void vulkan_backend_create_instance(VulkanBackend* vulkan_backend);
 void vulkan_backend_create_surface(VulkanBackend* vulkan_backend, Platform* platform);
 void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend);
@@ -105,6 +108,7 @@ void vulkan_backend_create_command_pool(VulkanBackend* vulkan_backend);
 
 void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend);
 void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend);
+
 void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend);
 void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend);
 void vulkan_backend_create_image_views(VulkanBackend* vulkan_backend);
@@ -114,6 +118,8 @@ void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend);
 // VULKAN PIPELINE
 
 void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend);
+void vulkan_backend_destroy_voxel_pipeline(VulkanBackend* vulkan_backend);
+
 void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend);
 VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* filename);
 
@@ -125,8 +131,10 @@ void vulkan_backend_update_texture_descriptor(
 
 // VULKAN FRAME
 
-void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index);
 void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend);
+void vulkan_backend_destroy_frame_context(VulkanBackend* vulkan_backend);
+
+void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index);
 void vulkan_backend_draw_frame(VulkanBackend* vulkan_backend);
 
 // VULKAN MEMORY

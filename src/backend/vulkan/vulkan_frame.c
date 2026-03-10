@@ -3,6 +3,8 @@
 
 #include <cglm/cglm.h>
 
+#include "core/log/log.h"
+
 void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend)
 {
     VkCommandBufferAllocateInfo command_buffer_allocate_info =
@@ -45,19 +47,25 @@ void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend)
             &frame->image_available
         );
 
-        vkCreateSemaphore(
-            vulkan_backend->vulkan_device_context.device, 
-            &semaphore_create_info, 
-            NULL, 
-            &frame->render_finished
-        );
-
         vkCreateFence(
             vulkan_backend->vulkan_device_context.device, 
             &fence_create_info, 
             NULL, 
             &frame->in_flight
         );
+    }
+
+    LOG_INFO("Vulkan Frame Initialized");
+}
+
+void vulkan_backend_destroy_frame_context(VulkanBackend *vulkan_backend)
+{
+    for (u32 frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
+    {
+        VulkanFrame* frame = &vulkan_backend->vulkan_frame_context.frame_array[frame_index];
+
+        vkDestroyFence(vulkan_backend->vulkan_device_context.device, frame->in_flight, NULL);
+        vkDestroySemaphore(vulkan_backend->vulkan_device_context.device, frame->image_available, NULL);
     }
 }
 
@@ -78,7 +86,7 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
 
     VkClearValue clear_values[2];
 
-    clear_values[0].color = (VkClearColorValue){{0.0f, 0.0f, 0.0f, 1.0f}};
+    clear_values[0].color = (VkClearColorValue){{0.1f, 0.1f, 0.2f, 1.0f}};
     clear_values[1].depthStencil = (VkClearDepthStencilValue){1.0f, 0};
 
     VkRenderPassBeginInfo render_pass_begin_info =
@@ -145,7 +153,26 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
     );
 
     PushConstants push_constants;
-    glm_mat4_identity(push_constants.projection_view_matrix);
+
+    mat4 view;
+    mat4 projection;
+    mat4 projection_view;
+
+    vec3 eye    = {0.0f, 0.0f, 2.0f};
+    vec3 center = {0.0f, 0.0f, 0.0f};
+    vec3 up     = {0.0f, 1.0f, 0.0f};
+
+    glm_lookat(eye, center, up, view);
+
+    float aspect = (float)render_area.extent.width / (float)render_area.extent.height;
+
+    glm_perspective(glm_rad(60.0f), aspect, 0.1f, 10.0f, projection);
+
+    projection[1][1] *= -1;
+
+    glm_mat4_mul(projection, view, projection_view);
+
+    glm_mat4_copy(projection_view, push_constants.projection_view_matrix);
 
     vkCmdPushConstants(
         command_buffer,
@@ -207,7 +234,7 @@ void vulkan_backend_draw_frame(VulkanBackend* vulkan_backend)
         .commandBufferCount = 1,
         .pCommandBuffers = &frame->command_buffer,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &frame->render_finished,
+        .pSignalSemaphores = &vulkan_backend->vulkan_swapchain_context.render_finished_array[image_index],
     };
 
     vkQueueSubmit(
@@ -221,7 +248,7 @@ void vulkan_backend_draw_frame(VulkanBackend* vulkan_backend)
     {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &frame->render_finished,
+        .pWaitSemaphores = &vulkan_backend->vulkan_swapchain_context.render_finished_array[image_index],
         .swapchainCount = 1,
         .pSwapchains = &vulkan_backend->vulkan_swapchain_context.swapchain,
         .pImageIndices = &image_index,

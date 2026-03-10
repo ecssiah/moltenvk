@@ -28,6 +28,83 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
         vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
         vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
     );
+
+    LOG_INFO("Voxel Pipeline Initialized");
+}
+
+void vulkan_backend_destroy_voxel_pipeline(VulkanBackend* vulkan_backend)
+{
+    VkDevice device = vulkan_backend->vulkan_device_context.device;
+
+    // Destroy texture resources
+    vkDestroySampler(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
+        NULL
+    );
+
+    vkDestroyImageView(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
+        NULL
+    );
+
+    vkDestroyImage(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
+        NULL
+    );
+
+    vkFreeMemory(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_memory,
+        NULL
+    );
+
+    // Destroy vertex buffer
+    vkDestroyBuffer(
+        device,
+        vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        NULL
+    );
+
+    vkFreeMemory(
+        device,
+        vulkan_backend->voxel_pipeline_context.vertex_memory,
+        NULL
+    );
+
+    // Destroy descriptor resources
+    vkDestroyDescriptorPool(
+        device,
+        vulkan_backend->voxel_pipeline_context.descriptor_pool,
+        NULL
+    );
+
+    vkDestroyDescriptorSetLayout(
+        device,
+        vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
+        NULL
+    );
+
+    // Destroy pipeline objects
+    vkDestroyPipeline(
+        device,
+        vulkan_backend->voxel_pipeline_context.pipeline,
+        NULL
+    );
+
+    vkDestroyPipelineLayout(
+        device,
+        vulkan_backend->voxel_pipeline_context.layout,
+        NULL
+    );
+
+    vkDestroyRenderPass(
+        device,
+        vulkan_backend->voxel_pipeline_context.render_pass,
+        NULL
+    );
 }
 
 void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
@@ -47,23 +124,17 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkPipelineShaderStageCreateInfo vert_stage_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .module = vert_module,
         .pName = "main",
-        .pSpecializationInfo = NULL,
     };
 
     VkPipelineShaderStageCreateInfo frag_stage_info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = frag_module,
         .pName = "main",
-        .pSpecializationInfo = NULL,
     };
 
     VkPipelineShaderStageCreateInfo shader_stage_array[] = {vert_stage_info, frag_stage_info};
@@ -172,10 +243,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 
     VkRect2D scissor_rect =
     {
-        .offset = {
-            .x = 0,
-            .y = 0,
-        },
+        .offset = { 0, 0 },
         .extent = vulkan_backend->vulkan_swapchain_context.extent,
     };
 
@@ -188,7 +256,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         .pScissors = &scissor_rect,
     };
 
-    VkDynamicState dynamic_states[] =
+    VkDynamicState dynamic_state_array[] =
     {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
@@ -198,7 +266,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .dynamicStateCount = 2,
-        .pDynamicStates = dynamic_states,
+        .pDynamicStates = dynamic_state_array,
     };
 
     VkPipelineRasterizationStateCreateInfo pipeline_rasterization_state_info =
@@ -241,12 +309,6 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkPipelineColorBlendAttachmentState pipeline_color_blend_attachment_state =
     {
         .blendEnable = VK_FALSE,
-        .srcColorBlendFactor = 0,
-        .dstColorBlendFactor = 0,
-        .colorBlendOp = 0,
-        .srcAlphaBlendFactor = 0,
-        .dstAlphaBlendFactor = 0,
-        .alphaBlendOp = 0,
         .colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT |
             VK_COLOR_COMPONENT_G_BIT |
@@ -274,8 +336,6 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_info =
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .bindingCount = 1,
         .pBindings = &descriptor_set_layout_binding
     };
@@ -302,8 +362,6 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkDescriptorPoolCreateInfo pool_info =
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .maxSets = 64,
         .poolSizeCount = 1,
         .pPoolSizes = &pool_size
@@ -418,8 +476,6 @@ VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* 
     VkShaderModuleCreateInfo shader_module_info =
     {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .codeSize = shader_src_size,
         .pCode = (const u32*)shader_src,
     };

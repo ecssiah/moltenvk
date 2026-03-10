@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <vulkan/vulkan_core.h>
 
 void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend)
 {
@@ -13,6 +14,8 @@ void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend)
     vulkan_backend_create_render_pass(vulkan_backend);
     vulkan_backend_create_depth_resources(vulkan_backend);
     vulkan_backend_create_frame_buffers(vulkan_backend);
+
+    LOG_INFO("Vulkan Swapchain Initialized");
 }
 
 void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
@@ -52,8 +55,6 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
     VkSwapchainCreateInfoKHR instance_create_info =
     {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .pNext = NULL,
-        .flags = 0,
         .surface = vulkan_backend->vulkan_device_context.surface,
         .minImageCount = 0,
         .imageFormat = surface_format.format,
@@ -62,13 +63,9 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = NULL,
         .preTransform = surface_capabilities.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = VK_PRESENT_MODE_FIFO_KHR,
-        .clipped = VK_TRUE,
-        .oldSwapchain = NULL,
     };
 
     u32 min_image_count = surface_capabilities.minImageCount + 1;
@@ -104,11 +101,12 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
         NULL
     );
     
+    vulkan_backend->vulkan_swapchain_context.image_count = image_count;
+
     vulkan_backend->vulkan_swapchain_context.image_array = malloc(sizeof (VkImage) * image_count);
     vulkan_backend->vulkan_swapchain_context.image_view_array = malloc(sizeof (VkImageView) * image_count);
     vulkan_backend->vulkan_swapchain_context.framebuffer_array = malloc(sizeof (VkFramebuffer) * image_count);
-
-    vulkan_backend->vulkan_swapchain_context.image_count = image_count;
+    vulkan_backend->vulkan_swapchain_context.render_finished_array = malloc(sizeof(VkSemaphore) * image_count);
 
     vkGetSwapchainImagesKHR(
         vulkan_backend->vulkan_device_context.device, 
@@ -200,16 +198,10 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
 
     VkSubpassDescription subpass_description =
     {
-        .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 0,
-        .pInputAttachments = NULL,
         .colorAttachmentCount = 1,
         .pColorAttachments = &color_ref,
-        .pResolveAttachments = NULL,
         .pDepthStencilAttachment = &depth_ref,
-        .preserveAttachmentCount = 0,
-        .pPreserveAttachments = NULL,
     };
 
     VkAttachmentDescription attachments[2] = { color_attachment, depth_attachment };
@@ -217,14 +209,10 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
     VkRenderPassCreateInfo render_pass_info =
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
         .attachmentCount = 2,
         .pAttachments = attachments,
         .subpassCount = 1,
         .pSubpasses = &subpass_description,
-        .dependencyCount = 0,
-        .pDependencies = NULL,
     };
 
     vkCreateRenderPass(
@@ -322,6 +310,18 @@ void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend)
 {
     for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
     {
+        VkSemaphoreCreateInfo semaphore_create_info = 
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        };
+
+        vkCreateSemaphore(
+            vulkan_backend->vulkan_device_context.device, 
+            &semaphore_create_info, 
+            NULL, 
+            &vulkan_backend->vulkan_swapchain_context.render_finished_array[image_index]
+        );
+
         VkImageView attachments[2] =
         {
             vulkan_backend->vulkan_swapchain_context.image_view_array[image_index],
@@ -331,8 +331,6 @@ void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend)
         VkFramebufferCreateInfo framebuffer_info =
         {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
             .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
             .attachmentCount = 2,
             .pAttachments = attachments,
@@ -354,6 +352,12 @@ void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend)
 {
     for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
     {
+        vkDestroySemaphore(
+            vulkan_backend->vulkan_device_context.device,
+            vulkan_backend->vulkan_swapchain_context.render_finished_array[image_index],
+            NULL
+        );
+
         vkDestroyFramebuffer(
             vulkan_backend->vulkan_device_context.device,
             vulkan_backend->vulkan_swapchain_context.framebuffer_array[image_index],
@@ -388,6 +392,7 @@ void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend)
     free(vulkan_backend->vulkan_swapchain_context.image_array);
     free(vulkan_backend->vulkan_swapchain_context.image_view_array);
     free(vulkan_backend->vulkan_swapchain_context.framebuffer_array);
+    free(vulkan_backend->vulkan_swapchain_context.render_finished_array);
 
     vkDestroySwapchainKHR(
         vulkan_backend->vulkan_device_context.device,
