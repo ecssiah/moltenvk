@@ -223,7 +223,7 @@ VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
 
         .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
         .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
         
         .mipLodBias = 0.0f,
         .anisotropyEnable = VK_FALSE,
@@ -234,7 +234,7 @@ VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
 
         .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
         .unnormalizedCoordinates = VK_FALSE,
-        
+
         .compareOp = VK_COMPARE_OP_ALWAYS,
     };
 
@@ -463,7 +463,7 @@ void vulkan_backend_create_texture_from_pixels(
         vulkan_backend,
         width,
         height,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -474,7 +474,7 @@ void vulkan_backend_create_texture_from_pixels(
     vulkan_backend_transition_image_layout(
         vulkan_backend,
         *image,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
     );
@@ -490,7 +490,7 @@ void vulkan_backend_create_texture_from_pixels(
     vulkan_backend_transition_image_layout(
         vulkan_backend,
         *image,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     );
@@ -498,7 +498,7 @@ void vulkan_backend_create_texture_from_pixels(
     *image_view = vulkan_backend_create_image_view(
         vulkan_backend,
         *image,
-        VK_FORMAT_R8G8B8A8_SRGB
+        VK_FORMAT_R8G8B8A8_UNORM
     );
 
     *sampler = vulkan_backend_create_sampler(vulkan_backend);

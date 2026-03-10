@@ -51,6 +51,8 @@ target_sources(
     src/app/app.c
     src/core/file.c
     src/core/log/log.c
+    src/core/math/view.c
+    src/core/math/projection.c
     src/backend/vulkan/vulkan_commands.c
     src/backend/vulkan/vulkan_memory.c
     src/backend/vulkan/vulkan_device.c

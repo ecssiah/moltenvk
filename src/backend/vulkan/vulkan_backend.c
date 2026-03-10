@@ -12,7 +12,7 @@ VulkanBackend* vulkan_backend_create(Platform* platform)
     vulkan_backend_create_device_context(vulkan_backend, platform);
     vulkan_backend_create_swapchain_context(vulkan_backend);
     vulkan_backend_create_voxel_pipeline(vulkan_backend);
-    vulkan_backend_create_fame_context(vulkan_backend);
+    vulkan_backend_create_frame_context(vulkan_backend);
 
     return vulkan_backend;
 }

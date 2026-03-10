@@ -1,3 +1,4 @@
+#include "core/math/math.h"
 #include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
@@ -5,7 +6,7 @@
 
 #include "core/log/log.h"
 
-void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_frame_context(VulkanBackend* vulkan_backend)
 {
     VkCommandBufferAllocateInfo command_buffer_allocate_info =
     {
@@ -86,7 +87,7 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
 
     VkClearValue clear_values[2];
 
-    clear_values[0].color = (VkClearColorValue){{0.1f, 0.1f, 0.2f, 1.0f}};
+    clear_values[0].color = (VkClearColorValue){{0.0f, 0.0f, 0.0f, 1.0f}};
     clear_values[1].depthStencil = (VkClearDepthStencilValue){1.0f, 0};
 
     VkRenderPassBeginInfo render_pass_begin_info =
@@ -154,25 +155,24 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
 
     PushConstants push_constants;
 
-    mat4 view;
-    mat4 projection;
-    mat4 projection_view;
+    mat4 view_matrix;
+    mat4 projection_matrix;
+    mat4 projection_view_matrix;
 
-    vec3 eye    = {0.0f, 0.0f, 2.0f};
+    vec3 eye    = {-3.0f, 1.0f, 0.0f};
     vec3 center = {0.0f, 0.0f, 0.0f};
-    vec3 up     = {0.0f, 1.0f, 0.0f};
+    vec3 up     = {0.0f, 0.0f, 1.0f};
 
-    glm_lookat(eye, center, up, view);
+    look_at_lh(eye, center, up, view_matrix);
 
     float aspect = (float)render_area.extent.width / (float)render_area.extent.height;
 
-    glm_perspective(glm_rad(60.0f), aspect, 0.1f, 10.0f, projection);
+    perspective_lh(glm_rad(60.0f), aspect, 0.1f, 10.0f, projection_matrix);
 
-    projection[1][1] *= -1;
+    projection_matrix[1][1] *= -1;
 
-    glm_mat4_mul(projection, view, projection_view);
-
-    glm_mat4_copy(projection_view, push_constants.projection_view_matrix);
+    glm_mat4_mul(projection_matrix, view_matrix, projection_view_matrix);
+    glm_mat4_copy(projection_view_matrix, push_constants.projection_view_matrix);
 
     vkCmdPushConstants(
         command_buffer,

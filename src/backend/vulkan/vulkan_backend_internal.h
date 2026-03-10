@@ -131,7 +131,7 @@ void vulkan_backend_update_texture_descriptor(
 
 // VULKAN FRAME
 
-void vulkan_backend_create_fame_context(VulkanBackend* vulkan_backend);
+void vulkan_backend_create_frame_context(VulkanBackend* vulkan_backend);
 void vulkan_backend_destroy_frame_context(VulkanBackend* vulkan_backend);
 
 void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkCommandBuffer command_buffer, u32 image_index);

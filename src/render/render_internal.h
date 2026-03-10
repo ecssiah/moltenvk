@@ -32,53 +32,54 @@ struct Render
 
 static const Vertex cube_vertex_array[] =
 {
-    // +Z (front)
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
+    // +X
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f}},
 
-    // -Z (back)
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +0.0f}},
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +1.0f}},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +0.0f}},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS ,-CUBE_RADIUS}, { +1.0f, +1.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS ,-CUBE_RADIUS}, { +0.0f, +1.0f}},
+    // -X
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
 
-    // +X (right)
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f}},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f}},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f}},
+    // +Y
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
 
-    // -X (left)
-    {{ -CUBE_RADIUS,-CUBE_RADIUS,-CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ -CUBE_RADIUS,-CUBE_RADIUS,+CUBE_RADIUS }, { +1.0f, +0.0f }},
-    {{ -CUBE_RADIUS,+CUBE_RADIUS,+CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS,-CUBE_RADIUS,-CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ -CUBE_RADIUS,+CUBE_RADIUS,+CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS,+CUBE_RADIUS,-CUBE_RADIUS }, { +0.0f, +1.0f }},
+    // -Y
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
 
-    // +Y (top)
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
+    // +Z
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +0.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
 
-    // -Y (bottom)
-    {{ -CUBE_RADIUS,-CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS,-CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
-    {{ +CUBE_RADIUS,-CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS,-CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS,-CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS,-CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
+    // -Z
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +1.0f}},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +0.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +1.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +1.0f}},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
+
 };
 
 Image render_image_load(const char* path);
