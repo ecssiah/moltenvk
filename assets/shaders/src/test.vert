@@ -1,9 +1,10 @@
 #version 450
 
-layout(push_constant) uniform Push
+layout(push_constant) 
+uniform Push
 {
     mat4 projection_view_matrix;
-} 
+}
 push;
 
 layout(location = 0) 

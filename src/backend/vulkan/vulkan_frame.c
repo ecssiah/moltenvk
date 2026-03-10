@@ -159,7 +159,7 @@ void vulkan_backend_record_command_buffer(VulkanBackend* vulkan_backend, VkComma
     mat4 projection_matrix;
     mat4 projection_view_matrix;
 
-    vec3 eye    = {-3.0f, 1.0f, 0.0f};
+    vec3 eye    = {3.0f, 1.0f, 0.0f};
     vec3 center = {0.0f, 0.0f, 0.0f};
     vec3 up     = {0.0f, 0.0f, 1.0f};
 
