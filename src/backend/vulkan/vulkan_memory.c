@@ -3,7 +3,10 @@
 
 #include <string.h>
 #include <vulkan/vulkan_core.h>
+
 #include "stb/stb_image.h"
+
+#include "render/render_internal.h"
 
 u32 vulkan_backend_locate_memory_type(
     VulkanBackend* vulkan_backend,
@@ -556,4 +559,77 @@ void vulkan_backend_create_texture_from_file(
     );
 
     stbi_image_free(pixel_array);
+}
+
+void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend)
+{
+    VulkanTexture* vulkan_texture = &vulkan_backend->voxel_pipeline_context.vulkan_texture;
+
+    vulkan_backend_create_texture_from_file(
+        vulkan_backend,
+        "assets/textures/lion.png",
+        &vulkan_texture->image,
+        &vulkan_texture->image_memory,
+        &vulkan_texture->image_view,
+        &vulkan_texture->sampler
+    );
+
+    vulkan_backend_update_texture_descriptor(
+        vulkan_backend,
+        vulkan_texture->image_view,
+        vulkan_texture->sampler
+    );
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_memory;
+
+    VkDeviceSize buffer_size = sizeof(cube_vertex_array);
+
+    vulkan_backend_create_buffer(
+        vulkan_backend,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &staging_buffer,
+        &staging_memory
+    );
+
+    void* data;
+
+    vkMapMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory,
+        0,
+        buffer_size,
+        0,
+        &data
+    );
+
+    memcpy(data, cube_vertex_array, buffer_size);
+
+    vkUnmapMemory(
+        vulkan_backend->vulkan_device_context.device,
+        staging_memory
+    );
+
+    vulkan_backend_create_buffer(
+        vulkan_backend,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        &vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        &vulkan_backend->voxel_pipeline_context.vertex_memory
+    );
+
+    vulkan_backend_copy_buffer(
+        vulkan_backend,
+        staging_buffer,
+        vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        buffer_size
+    );
+
+    vkDestroyBuffer(vulkan_backend->vulkan_device_context.device, staging_buffer, NULL);
+    vkFreeMemory(vulkan_backend->vulkan_device_context.device, staging_memory, NULL);
 }

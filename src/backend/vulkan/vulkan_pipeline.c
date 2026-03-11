@@ -1,4 +1,3 @@
-#include "vulkan_backend.h"
 #include "vulkan_backend_internal.h"
 
 #include <stdlib.h>
@@ -11,103 +10,6 @@
 #include "render/render_internal.h"
 
 void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
-{
-    vulkan_backend_create_graphics_pipeline(vulkan_backend);
-
-    vulkan_backend_create_texture_from_file(
-        vulkan_backend,
-        "assets/textures/lion.png",
-        &vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
-        &vulkan_backend->voxel_pipeline_context.vulkan_texture.image_memory,
-        &vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
-        &vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
-    );
-
-    vulkan_backend_update_texture_descriptor(
-        vulkan_backend,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler
-    );
-
-    LOG_INFO("Voxel Pipeline Initialized");
-}
-
-void vulkan_backend_destroy_voxel_pipeline(VulkanBackend* vulkan_backend)
-{
-    VkDevice device = vulkan_backend->vulkan_device_context.device;
-
-    // Destroy texture resources
-    vkDestroySampler(
-        device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
-        NULL
-    );
-
-    vkDestroyImageView(
-        device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
-        NULL
-    );
-
-    vkDestroyImage(
-        device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
-        NULL
-    );
-
-    vkFreeMemory(
-        device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_memory,
-        NULL
-    );
-
-    // Destroy vertex buffer
-    vkDestroyBuffer(
-        device,
-        vulkan_backend->voxel_pipeline_context.vertex_buffer,
-        NULL
-    );
-
-    vkFreeMemory(
-        device,
-        vulkan_backend->voxel_pipeline_context.vertex_memory,
-        NULL
-    );
-
-    // Destroy descriptor resources
-    vkDestroyDescriptorPool(
-        device,
-        vulkan_backend->voxel_pipeline_context.descriptor_pool,
-        NULL
-    );
-
-    vkDestroyDescriptorSetLayout(
-        device,
-        vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
-        NULL
-    );
-
-    // Destroy pipeline objects
-    vkDestroyPipeline(
-        device,
-        vulkan_backend->voxel_pipeline_context.pipeline,
-        NULL
-    );
-
-    vkDestroyPipelineLayout(
-        device,
-        vulkan_backend->voxel_pipeline_context.layout,
-        NULL
-    );
-
-    vkDestroyRenderPass(
-        device,
-        vulkan_backend->voxel_pipeline_context.render_pass,
-        NULL
-    );
-}
-
-void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 {
     VkShaderModule vert_module = 
         vulkan_backend_create_shader_module(
@@ -137,7 +39,11 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         .pName = "main",
     };
 
-    VkPipelineShaderStageCreateInfo shader_stage_array[] = {vert_stage_info, frag_stage_info};
+    VkPipelineShaderStageCreateInfo shader_stage_array[] = 
+    {
+        vert_stage_info, 
+        frag_stage_info
+    };
 
     VkVertexInputBindingDescription vertex_input_binding =
     {
@@ -177,59 +83,6 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
-
-    VkBuffer staging_buffer;
-    VkDeviceMemory staging_memory;
-
-    VkDeviceSize buffer_size = sizeof(cube_vertex_array);
-
-    vulkan_backend_create_buffer(
-        vulkan_backend,
-        buffer_size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &staging_buffer,
-        &staging_memory
-    );
-
-    void* data;
-
-    vkMapMemory(
-        vulkan_backend->vulkan_device_context.device,
-        staging_memory,
-        0,
-        buffer_size,
-        0,
-        &data
-    );
-
-    memcpy(data, cube_vertex_array, buffer_size);
-
-    vkUnmapMemory(
-        vulkan_backend->vulkan_device_context.device,
-        staging_memory
-    );
-
-    vulkan_backend_create_buffer(
-        vulkan_backend,
-        buffer_size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        &vulkan_backend->voxel_pipeline_context.vertex_buffer,
-        &vulkan_backend->voxel_pipeline_context.vertex_memory
-    );
-
-    vulkan_backend_copy_buffer(
-        vulkan_backend,
-        staging_buffer,
-        vulkan_backend->voxel_pipeline_context.vertex_buffer,
-        buffer_size
-    );
-
-    vkDestroyBuffer(vulkan_backend->vulkan_device_context.device, staging_buffer, NULL);
-    vkFreeMemory(vulkan_backend->vulkan_device_context.device, staging_memory, NULL);
 
     VkViewport viewport =
     {
@@ -380,7 +233,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
         LOG_FATAL("Failed to create descriptor pool");
     }
 
-    VkDescriptorSetAllocateInfo alloc_info =
+    VkDescriptorSetAllocateInfo descriptor_set_allocate_info =
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = vulkan_backend->voxel_pipeline_context.descriptor_pool,
@@ -391,7 +244,7 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
     VkResult descriptor_set_result =
         vkAllocateDescriptorSets(
             vulkan_backend->vulkan_device_context.device,
-            &alloc_info,
+            &descriptor_set_allocate_info,
             &vulkan_backend->voxel_pipeline_context.descriptor_set
         );
 
@@ -466,6 +319,83 @@ void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend)
 
     vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, frag_module, NULL);
     vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, vert_module, NULL);
+
+    LOG_INFO("Voxel Pipeline Initialized");
+}
+
+void vulkan_backend_destroy_voxel_pipeline(VulkanBackend* vulkan_backend)
+{
+    VkDevice device = vulkan_backend->vulkan_device_context.device;
+
+    // Destroy texture resources
+    vkDestroySampler(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
+        NULL
+    );
+
+    vkDestroyImageView(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
+        NULL
+    );
+
+    vkDestroyImage(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
+        NULL
+    );
+
+    vkFreeMemory(
+        device,
+        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_memory,
+        NULL
+    );
+
+    // Destroy vertex buffer
+    vkDestroyBuffer(
+        device,
+        vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        NULL
+    );
+
+    vkFreeMemory(
+        device,
+        vulkan_backend->voxel_pipeline_context.vertex_memory,
+        NULL
+    );
+
+    // Destroy descriptor resources
+    vkDestroyDescriptorPool(
+        device,
+        vulkan_backend->voxel_pipeline_context.descriptor_pool,
+        NULL
+    );
+
+    vkDestroyDescriptorSetLayout(
+        device,
+        vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
+        NULL
+    );
+
+    // Destroy pipeline objects
+    vkDestroyPipeline(
+        device,
+        vulkan_backend->voxel_pipeline_context.pipeline,
+        NULL
+    );
+
+    vkDestroyPipelineLayout(
+        device,
+        vulkan_backend->voxel_pipeline_context.layout,
+        NULL
+    );
+
+    vkDestroyRenderPass(
+        device,
+        vulkan_backend->voxel_pipeline_context.render_pass,
+        NULL
+    );
 }
 
 VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* filename)

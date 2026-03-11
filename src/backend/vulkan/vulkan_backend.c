@@ -19,7 +19,7 @@ VulkanBackend* vulkan_backend_create(Platform* platform)
 
 void vulkan_backend_init(VulkanBackend* vulkan_backend)
 {
-
+    vulkan_backend_create_voxel_mesh(vulkan_backend);
 }
 
 void vulkan_backend_destroy(VulkanBackend* vulkan_backend)

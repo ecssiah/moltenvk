@@ -15,19 +15,6 @@ struct Vertex
     vec2 uv;
 };
 
-struct Image
-{
-    u32 width;
-    u32 height;
-    u32 channels;
-    u8* pixels;
-};
-
-struct Render
-{
-    VulkanBackend* vulkan_backend;
-};
-
 #define CUBE_RADIUS 0.5f
 
 static const Vertex cube_vertex_array[] =
@@ -79,7 +66,19 @@ static const Vertex cube_vertex_array[] =
     {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +1.0f}},
     {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +1.0f}},
     {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
+};
 
+struct Image
+{
+    u32 width;
+    u32 height;
+    u32 channels;
+    u8* pixels;
+};
+
+struct Render
+{
+    VulkanBackend* vulkan_backend;
 };
 
 Image render_image_load(const char* path);

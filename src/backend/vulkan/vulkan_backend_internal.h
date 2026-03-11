@@ -117,11 +117,10 @@ void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend);
 
 // VULKAN PIPELINE
 
+VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* filename);
+
 void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend);
 void vulkan_backend_destroy_voxel_pipeline(VulkanBackend* vulkan_backend);
-
-void vulkan_backend_create_graphics_pipeline(VulkanBackend* vulkan_backend);
-VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* filename);
 
 void vulkan_backend_update_texture_descriptor(
     VulkanBackend* vulkan_backend,
@@ -216,6 +215,8 @@ void vulkan_backend_create_texture_from_file(
     VkImageView* image_view,
     VkSampler* sampler
 );
+
+void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend);
 
 // VULKAN COMMANDS
 

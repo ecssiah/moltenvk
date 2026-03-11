@@ -19,7 +19,10 @@ Render* render_create()
 void render_init(Render* render, Platform* platform)
 {
     VulkanBackend* vulkan_backend = vulkan_backend_create(platform);
+    
     render->vulkan_backend = vulkan_backend;
+
+    vulkan_backend_init(vulkan_backend);
 }
 
 void render_destroy(Render* render)
