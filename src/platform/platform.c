@@ -1,12 +1,11 @@
-#include "platform/platform.h"
 #include "platform/platform_internal.h"
 
 #include <stdlib.h>
 
 #include "core/log/log.h"
 
-static void init_platform_input(PlatformInput* platform_input);
-static void init_platform_window(PlatformWindow* platform_window);
+static void platform_input_init(PlatformInput* platform_input);
+static void platform_window_init(PlatformWindow* platform_window);
 
 Platform* platform_create()
 {
@@ -15,18 +14,18 @@ Platform* platform_create()
     return platform;
 }
 
-void platform_init(Platform* platform)
-{
-    init_platform_input(&platform->platform_input);
-    init_platform_window(&platform->platform_window);
-}
-
 void platform_destroy(Platform* platform)
 {
     glfwDestroyWindow(platform->platform_window.glfw_window);
     glfwTerminate();
 
     free(platform);
+}
+
+void platform_init(Platform* platform)
+{
+    platform_input_init(&platform->platform_input);
+    platform_window_init(&platform->platform_window);
 }
 
 bool platform_is_active(Platform* platform)
@@ -65,7 +64,7 @@ void platform_update(Platform* platform)
     }
 }
 
-static void init_platform_input(PlatformInput* platform_input)
+static void platform_input_init(PlatformInput* platform_input)
 {
     for (int key = 0; key < GLFW_KEY_LAST + 1; ++key)
     {
@@ -87,7 +86,7 @@ static void init_platform_input(PlatformInput* platform_input)
     LOG_INFO("Platform Input initialized");
 }
 
-static void init_platform_window(PlatformWindow* platform_window)
+static void platform_window_init(PlatformWindow* platform_window)
 {
     if (glfwInit())
     {

@@ -5,6 +5,7 @@
 
 typedef struct Platform Platform;
 typedef struct Render Render;
+typedef struct World World;
 
 typedef struct
 {
@@ -12,10 +13,12 @@ typedef struct
 
     Platform* platform;
     Render* render;
-} 
+
+    World* world;
+}
 App;
 
-App* app_create();
+App* app_create(void);
 void app_destroy(App* app);
 void app_init(App* app);
 

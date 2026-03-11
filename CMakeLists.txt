@@ -49,6 +49,8 @@ target_sources(
     PRIVATE
     src/main.c
     src/app/app.c
+    src/app/camera.c
+    src/app/world/world.c
     src/core/file.c
     src/core/log/log.c
     src/core/math/view.c

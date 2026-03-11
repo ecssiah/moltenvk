@@ -76,9 +76,20 @@ struct Image
     u8* pixels;
 };
 
+struct FrameView
+{
+    vec3 position;
+
+    mat4 view_matrix;
+    mat4 projection_matrix;
+    mat4 view_projection_matrix;
+};
+
 struct Render
 {
     VulkanBackend* vulkan_backend;
+
+    FrameView main_frame_view;
 };
 
 Image render_image_load(const char* path);

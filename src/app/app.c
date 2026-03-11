@@ -7,6 +7,7 @@
 #include "core/log/log.h"
 #include "render/render.h"
 #include "platform/platform.h"
+#include "app/world/world.h"
 
 App* app_create()
 {
@@ -15,6 +16,8 @@ App* app_create()
     app->platform = platform_create();
     app->render = render_create();
 
+    app->world = world_create();
+
     return app;
 }
 
@@ -22,6 +25,8 @@ void app_destroy(App* app)
 {
     platform_destroy(app->platform);
     render_destroy(app->render);
+
+    world_destroy(app->world);
 
     LOG_INFO("App Destroyed");
 }
@@ -33,6 +38,8 @@ void app_init(App* app)
     platform_init(app->platform);
     render_init(app->render, app->platform);
 
+    world_init(app->world);
+
     LOG_INFO("App Initialized");
 }
 
@@ -42,5 +49,7 @@ void app_run(App* app)
     {
         platform_update(app->platform);
         render_update(app->render);
+
+        world_update(app->world, app->platform);
     }
 }

@@ -16,15 +16,6 @@ Render* render_create()
     return render;
 }
 
-void render_init(Render* render, Platform* platform)
-{
-    VulkanBackend* vulkan_backend = vulkan_backend_create(platform);
-    
-    render->vulkan_backend = vulkan_backend;
-
-    vulkan_backend_init(vulkan_backend);
-}
-
 void render_destroy(Render* render)
 {
     vulkan_backend_destroy(render->vulkan_backend);
@@ -32,6 +23,21 @@ void render_destroy(Render* render)
     render->vulkan_backend = NULL;
 
     free(render);
+}
+
+void render_init(Render* render, Platform* platform)
+{
+    VulkanBackend* vulkan_backend = vulkan_backend_create(platform);
+    
+    render->vulkan_backend = vulkan_backend;
+
+    glm_vec3_zero(render->main_frame_view.position);
+
+    glm_mat4_identity(render->main_frame_view.view_matrix);
+    glm_mat4_identity(render->main_frame_view.projection_matrix);
+    glm_mat4_identity(render->main_frame_view.view_projection_matrix);
+
+    vulkan_backend_init(vulkan_backend);
 }
 
 void render_update(Render* render)
