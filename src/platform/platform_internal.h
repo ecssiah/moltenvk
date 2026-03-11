@@ -41,6 +41,5 @@ struct Platform
 
 void platform_poll_events(struct PlatformWindow* platform_window);
 void platform_record_input(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
-void platform_handle_input(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
 
 #endif

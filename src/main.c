@@ -8,11 +8,7 @@ int main(int argc, char** argv)
     App* app = app_create();
 
     app_init(app);
-
-    LOG_INFO("Starting App");
-
     app_run(app);
-    
     app_destroy(app);
 
     log_shutdown();

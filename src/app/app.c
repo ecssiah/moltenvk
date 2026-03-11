@@ -18,6 +18,14 @@ App* app_create()
     return app;
 }
 
+void app_destroy(App* app) 
+{
+    platform_destroy(app->platform);
+    render_destroy(app->render);
+
+    LOG_INFO("App Destroyed");
+}
+
 void app_init(App* app)
 {
     app->is_running = true;
@@ -26,14 +34,6 @@ void app_init(App* app)
     render_init(app->render, app->platform);
 
     LOG_INFO("App Initialized");
-}
-
-void app_destroy(App* app) 
-{
-    platform_destroy(app->platform);
-    render_destroy(app->render);
-
-    LOG_INFO("App Destroyed");
 }
 
 void app_run(App* app)

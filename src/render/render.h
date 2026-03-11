@@ -10,9 +10,9 @@ typedef struct Render Render;
 typedef struct Platform Platform;
 
 Render* render_create();
-void render_init(Render* render, Platform* platform);
 void render_destroy(Render* render);
 
+void render_init(Render* render, Platform* platform);
 void render_update(Render* render);
 
 #endif

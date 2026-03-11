@@ -16,8 +16,8 @@ typedef struct
 App;
 
 App* app_create();
-void app_init(App* app);
 void app_destroy(App* app);
+void app_init(App* app);
 
 void app_run(App* app);
 void app_update(App* app);

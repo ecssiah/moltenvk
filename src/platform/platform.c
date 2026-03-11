@@ -58,7 +58,11 @@ void platform_update(Platform* platform)
 {
     platform_poll_events(&platform->platform_window);
     platform_record_input(&platform->platform_input, &platform->platform_window);
-    platform_handle_input(&platform->platform_input, &platform->platform_window);
+
+    if (platform_is_key_released(&platform->platform_input, GLFW_KEY_ESCAPE))
+    {
+        glfwSetWindowShouldClose(platform->platform_window.glfw_window, GLFW_TRUE);
+    }
 }
 
 static void init_platform_input(PlatformInput* platform_input)

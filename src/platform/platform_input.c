@@ -38,10 +38,32 @@ void platform_record_input(PlatformInput* platform_input, PlatformWindow* platfo
     );
 }
 
-void platform_handle_input(PlatformInput* platform_input, PlatformWindow* platform_window)
+bool platform_is_key_down(PlatformInput* platform_input, int key)
 {
-    if (platform_input->current_key_array[GLFW_KEY_ESCAPE])
-    {
-        glfwSetWindowShouldClose(platform_window->glfw_window, GLFW_TRUE);
-    }
+    return platform_input->current_key_array[key];
+}
+
+bool platform_is_key_pressed(PlatformInput* platform_input, int key)
+{
+    return platform_input->current_key_array[key] && !platform_input->previous_key_array[key];
+}
+
+bool platform_is_key_released(PlatformInput* platform_input, int key)
+{
+    return !platform_input->current_key_array[key] && platform_input->previous_key_array[key];
+}
+
+bool platform_is_mouse_down(PlatformInput* platform_input, int button)
+{
+    return platform_input->current_mouse_array[button];
+}
+
+bool platform_is_mouse_pressed(PlatformInput* platform_input, int button)
+{
+    return platform_input->current_mouse_array[button] && !platform_input->previous_mouse_array[button];
+}
+
+bool platform_is_mouse_released(PlatformInput* platform_input, int button)
+{
+    return !platform_input->current_mouse_array[button] && platform_input->previous_mouse_array[button];
 }
