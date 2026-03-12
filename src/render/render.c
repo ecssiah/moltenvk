@@ -31,47 +31,34 @@ void render_destroy(Render* render)
 
 void render_init(Render* render, Platform* platform)
 {
+    glm_vec3_zero(render->position);
+
+    glm_mat4_identity(render->view_matrix);
+    glm_mat4_identity(render->projection_matrix);
+    glm_mat4_identity(render->projection_view_matrix);
+
+    const float fov = glm_rad(60.0f);
+    const float aspect_ratio = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
+    const float near_plane = 0.1f;
+    const float far_plane = 10.0f;
+
+    perspective_lh(fov, aspect_ratio, near_plane, far_plane, render->projection_matrix);
+
+    glm_mat4_mul(
+        render->projection_matrix, 
+        render->view_matrix, 
+        render->projection_view_matrix
+    );
+
     vulkan_backend_create_and_init_device_context(render, platform);
     vulkan_backend_create_and_init_swapchain_context(render);
     vulkan_backend_create_and_init_voxel_pipeline(render);
     vulkan_backend_create_and_init_frame_context(render);
 
     vulkan_backend_create_voxel_mesh(render);
-
-    glm_vec3_zero(render->scene_context.position);
-
-    glm_mat4_identity(render->scene_context.view_matrix);
-    glm_mat4_identity(render->scene_context.projection_matrix);
-    glm_mat4_identity(render->scene_context.projection_view_matrix);
-
-    float aspect_ratio = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
-
-    perspective_lh(glm_rad(60.0f), aspect_ratio, 0.1f, 10.0f, render->scene_context.projection_matrix);
-
-    glm_mat4_mul(
-        render->scene_context.projection_matrix, 
-        render->scene_context.view_matrix, 
-        render->scene_context.projection_view_matrix
-    );
 }
 
-// PushConstants push_constants;
-
-// glm_mat4_copy(
-//     vulkan_backend->vulkan_frame_context.projection_view_matrix, 
-//     push_constants.projection_view_matrix
-// );
-
-// vkCmdPushConstants(
-//     vulkan_backend->command_buffer,
-//     vulkan_backend->voxel_pipeline_context.layout,
-//     VK_SHADER_STAGE_VERTEX_BIT,
-//     0,
-//     sizeof(PushConstants),
-//     &push_constants
-// );
-
-void render_update(Render* render, World* world)
+void render_update(Render* render, World* world, f64 delta_time)
 {
     vec3 forward;
     camera_get_forward(&world->camera, forward);
@@ -81,17 +68,73 @@ void render_update(Render* render, World* world)
     vec3 center;
     glm_vec3_add(world->camera.position, forward, center);
 
-    mat4 view_matrix;
-    glm_mat4_identity(view_matrix);
+    glm_mat4_identity(render->view_matrix);
 
-    look_at_lh(world->camera.position, center, up, view_matrix);
+    look_at_lh(world->camera.position, center, up, render->view_matrix);
 
-    glm_mat4_print(view_matrix, stdout);
-
-    //
+    glm_vec3_copy(world->camera.position, render->position);
 }
 
 void render_draw(Render* render)
 {
-    vulkan_backend_draw_frame(render);
+    VulkanFrame* frame = &render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index];
+
+    vkWaitForFences(
+        render->vulkan_device_context.device, 
+        1, 
+        &frame->in_flight, 
+        VK_TRUE, 
+        UINT64_MAX
+    );
+
+    u32 image_index;
+
+    vkAcquireNextImageKHR(
+        render->vulkan_device_context.device, 
+        render->vulkan_swapchain_context.swapchain, 
+        UINT64_MAX, 
+        frame->image_available, 
+        VK_NULL_HANDLE, 
+        &image_index
+    );
+
+    vkResetFences(render->vulkan_device_context.device, 1, &frame->in_flight);
+    vkResetCommandBuffer(frame->command_buffer, 0);
+
+    vulkan_backend_record_command_buffer(render, frame->command_buffer, image_index);
+
+    VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    VkSubmitInfo submit_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &frame->image_available,
+        .pWaitDstStageMask = wait_stage_array,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &frame->command_buffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &render->vulkan_swapchain_context.render_finished_array[image_index],
+    };
+
+    vkQueueSubmit(
+        render->vulkan_device_context.graphics_queue,
+        1,
+        &submit_info,
+        frame->in_flight
+    );
+
+    VkPresentInfoKHR present_info = 
+    {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &render->vulkan_swapchain_context.render_finished_array[image_index],
+        .swapchainCount = 1,
+        .pSwapchains = &render->vulkan_swapchain_context.swapchain,
+        .pImageIndices = &image_index,
+    };
+
+    vkQueuePresentKHR(render->vulkan_device_context.present_queue, &present_info);
+
+    render->vulkan_frame_context.frame_index = (render->vulkan_frame_context.frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
 }

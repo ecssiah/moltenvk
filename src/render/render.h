@@ -2,7 +2,7 @@
 #define RENDER_H 1
 
 #include <cglm/cglm.h>
-#include <vulkan/vulkan.h>
+#define GLFW_INCLUDE_VULKAN
 
 #include "core/types.h"
 #include "platform/platform.h"
@@ -154,16 +154,6 @@ typedef struct VulkanDeviceContext
 }
 VulkanDeviceContext;
 
-typedef struct SceneContext
-{
-    vec3 position;
-
-    mat4 view_matrix;
-    mat4 projection_matrix;
-    mat4 projection_view_matrix;
-}
-SceneContext;
-
 typedef struct PushConstants
 {
     mat4 projection_view_matrix;
@@ -172,7 +162,11 @@ PushConstants;
 
 typedef struct Render
 {
-    SceneContext scene_context;
+    vec3 position;
+
+    mat4 view_matrix;
+    mat4 projection_matrix;
+    mat4 projection_view_matrix;
 
     VulkanDeviceContext vulkan_device_context;
     VulkanSwapchainContext vulkan_swapchain_context;
@@ -185,7 +179,7 @@ Render* render_create(Platform* platform);
 void render_destroy(Render* render);
 
 void render_init(Render* render, Platform* platform);
-void render_update(Render* render, World* world);
+void render_update(Render* render, World* world, f64 delta_time);
 void render_draw(Render* render);
 
 Image render_image_load(const char* path);

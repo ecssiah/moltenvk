@@ -1,7 +1,6 @@
 #include "render/render.h"
 
 #include <string.h>
-#include <vulkan/vulkan_core.h>
 #include "stb/stb_image.h"
 
 #include "core/log/log.h"

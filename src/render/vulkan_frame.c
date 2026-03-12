@@ -153,6 +153,23 @@ void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer comman
         NULL
     );
 
+    PushConstants push_constants;
+
+    glm_mat4_mul(render->projection_matrix, render->view_matrix, render->projection_view_matrix);
+    glm_mat4_copy(render->projection_view_matrix, push_constants.projection_view_matrix);
+
+    glm_mat4_print(render->view_matrix, stdout);
+    // glm_mat4_print(push_constants.projection_view_matrix, stdout);
+
+    vkCmdPushConstants(
+        render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index].command_buffer,
+        render->voxel_pipeline_context.layout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0,
+        sizeof(PushConstants),
+        &push_constants
+    );
+
     vkCmdDraw(
         command_buffer,
         36,
@@ -167,64 +184,5 @@ void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer comman
 
 void vulkan_backend_draw_frame(Render* render) 
 {
-    VulkanFrame* frame = &render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index];
 
-    vkWaitForFences(
-        render->vulkan_device_context.device, 
-        1, 
-        &frame->in_flight, 
-        VK_TRUE, 
-        UINT64_MAX
-    );
-
-    u32 image_index;
-
-    vkAcquireNextImageKHR(
-        render->vulkan_device_context.device, 
-        render->vulkan_swapchain_context.swapchain, 
-        UINT64_MAX, 
-        frame->image_available, 
-        VK_NULL_HANDLE, 
-        &image_index
-    );
-
-    vkResetFences(render->vulkan_device_context.device, 1, &frame->in_flight);
-    vkResetCommandBuffer(frame->command_buffer, 0);
-
-    vulkan_backend_record_command_buffer(render, frame->command_buffer, image_index);
-
-    VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    VkSubmitInfo submit_info = 
-    {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &frame->image_available,
-        .pWaitDstStageMask = wait_stage_array,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &frame->command_buffer,
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &render->vulkan_swapchain_context.render_finished_array[image_index],
-    };
-
-    vkQueueSubmit(
-        render->vulkan_device_context.graphics_queue,
-        1,
-        &submit_info,
-        frame->in_flight
-    );
-
-    VkPresentInfoKHR present_info = 
-    {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &render->vulkan_swapchain_context.render_finished_array[image_index],
-        .swapchainCount = 1,
-        .pSwapchains = &render->vulkan_swapchain_context.swapchain,
-        .pImageIndices = &image_index,
-    };
-
-    vkQueuePresentKHR(render->vulkan_device_context.present_queue, &present_info);
-
-    render->vulkan_frame_context.frame_index = (render->vulkan_frame_context.frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
 }

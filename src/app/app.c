@@ -35,6 +35,9 @@ void app_init(App* app)
 {
     app->is_running = true;
 
+    app->last_time = glfwGetTime();
+    app->delta_time = 0.0;
+
     platform_init(app->platform);
     render_init(app->render, app->platform);
 
@@ -47,11 +50,15 @@ void app_run(App* app)
 {
     while (platform_is_active(app->platform))
     {
-        platform_update(app->platform);
-        
-        world_update(app->world, app->platform);
+        const double current_time = glfwGetTime();
 
-        render_update(app->render, app->world);
+        app->delta_time = current_time - app->last_time;
+        app->last_time = current_time;
+
+        platform_update(app->platform);
+        world_update(app->world, app->platform, app->delta_time);
+        render_update(app->render, app->world, app->delta_time);
+
         render_draw(app->render);
     }
 }

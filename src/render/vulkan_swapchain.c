@@ -1,9 +1,8 @@
 #include "render/render.h"
 
-#include <vulkan/vulkan.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <vulkan/vulkan_core.h>
+#define GLFW_INCLUDE_VULKAN
 
 #include "core/log/log.h"
 

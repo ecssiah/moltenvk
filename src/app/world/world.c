@@ -22,7 +22,7 @@ void world_init(World* world)
     glm_mat4_identity(world->camera.orientation);
 }
 
-void world_update(World* world, Platform* platform)
+void world_update(World* world, Platform* platform, f64 delta_time)
 {
     vec3 input_value;
     glm_vec3_zero(input_value);
@@ -60,5 +60,7 @@ void world_update(World* world, Platform* platform)
     const float camera_speed = 1.0f;
 
     glm_vec3_scale(input_value, camera_speed, input_value);
+    glm_vec3_scale(input_value, delta_time, input_value);
+    
     glm_vec3_add(input_value, world->camera.position, world->camera.position);
 }

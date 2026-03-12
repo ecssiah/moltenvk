@@ -16,6 +16,6 @@ World* world_create(void);
 void world_destroy(World* world);
 
 void world_init(World* world);
-void world_update(World* world, Platform* platform);
+void world_update(World* world, Platform* platform, f64 delta_time);
 
 #endif
