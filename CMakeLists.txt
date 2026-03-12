@@ -47,6 +47,8 @@ add_executable(vulkantest)
 target_sources(
     vulkantest
     PRIVATE
+    external/nuklear/nuklear_loader.c
+    external/stb/stb_image_loader.c
     src/main.c
     src/app/app.c
     src/app/camera.c
@@ -66,8 +68,8 @@ target_sources(
     src/render/vulkan_pipeline.c
     src/render/vulkan_frame.c
     src/render/vulkan_swapchain.c
+    src/render/nuklear_context.c
     src/render/render.c
-    external/stb/stb_image_loader.c
 )
 
 add_dependencies(

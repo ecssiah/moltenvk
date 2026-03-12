@@ -4,7 +4,7 @@
 
 #include "core/log/log.h"
 
-void vulkan_backend_create_and_init_frame_context(Render* render)
+void render_vulkan_create_and_init_frame_context(Render* render)
 {
     VkCommandBufferAllocateInfo command_buffer_allocate_info =
     {
@@ -59,7 +59,7 @@ void vulkan_backend_create_and_init_frame_context(Render* render)
     LOG_INFO("Vulkan Frame Initialized");
 }
 
-void vulkan_backend_destroy_frame_context(Render* render)
+void render_vulkan_destroy_frame_context(Render* render)
 {
     for (u32 frame_index = 0; frame_index < MAX_FRAMES_IN_FLIGHT; ++frame_index)
     {
@@ -70,7 +70,7 @@ void vulkan_backend_destroy_frame_context(Render* render)
     }
 }
 
-void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer command_buffer, u32 image_index) 
+void render_vulkan_record_command_buffer(Render* render, VkCommandBuffer command_buffer, u32 image_index) 
 {
     VkCommandBufferBeginInfo command_buffer_info = 
     {
@@ -93,7 +93,7 @@ void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer comman
     VkRenderPassBeginInfo render_pass_begin_info =
     {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = render->voxel_pipeline_context.render_pass,
+        .renderPass = render->vulkan_swapchain_context.render_pass,
         .framebuffer = render->vulkan_swapchain_context.framebuffer_array[image_index],
         .renderArea = render_area,
         .clearValueCount = 2,
@@ -153,18 +153,17 @@ void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer comman
         NULL
     );
 
-    PushConstants push_constants;
+    VoxelPushConstants voxel_push_constants;
 
-    glm_mat4_mul(render->projection_matrix, render->view_matrix, render->projection_view_matrix);
-    glm_mat4_copy(render->projection_view_matrix, push_constants.projection_view_matrix);
+    glm_mat4_copy(render->projection_view_matrix, voxel_push_constants.projection_view_matrix);
 
     vkCmdPushConstants(
         render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index].command_buffer,
         render->voxel_pipeline_context.layout,
         VK_SHADER_STAGE_VERTEX_BIT,
         0,
-        sizeof(PushConstants),
-        &push_constants
+        sizeof(VoxelPushConstants),
+        &voxel_push_constants
     );
 
     vkCmdDraw(
@@ -179,7 +178,7 @@ void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer comman
     vkEndCommandBuffer(command_buffer);
 }
 
-void vulkan_backend_draw_frame(Render* render) 
+void render_vulkan_draw_frame(Render* render) 
 {
 
 }

@@ -1,3 +1,5 @@
+#include "nuklear/nuklear.h"
+
 #include "app/app.h"
 #include "core/log/log.h"
 

@@ -19,12 +19,18 @@ Render* render_create(Platform* platform)
 
 void render_destroy(Render* render)
 {
-    vkDeviceWaitIdle(render->vulkan_device_context.device);
+    VkDevice device = render->vulkan_device_context.device;
 
-    vulkan_backend_destroy_frame_context(render);
-    vulkan_backend_destroy_voxel_pipeline(render);
-    vulkan_backend_destroy_swapchain_context(render);
-    vulkan_backend_destroy_device_context(render);
+    vkDeviceWaitIdle(device);
+
+    render_vulkan_destroy_voxel_pipeline(render);
+    render_vulkan_destroy_nuklear_pipeline(render);
+
+    render_vulkan_destroy_frame_context(render);
+
+    render_vulkan_destroy_swapchain_context(render);
+
+    render_vulkan_destroy_device_context(render);
 
     free(render);
 }
@@ -50,12 +56,12 @@ void render_init(Render* render, Platform* platform)
         render->projection_view_matrix
     );
 
-    vulkan_backend_create_and_init_device_context(render, platform);
-    vulkan_backend_create_and_init_swapchain_context(render);
-    vulkan_backend_create_and_init_voxel_pipeline(render);
-    vulkan_backend_create_and_init_frame_context(render);
+    render_vulkan_create_and_init_device_context(render, platform);
+    render_vulkan_create_and_init_swapchain_context(render);
+    render_vulkan_create_and_init_voxel_pipeline(render);
+    render_vulkan_create_and_init_frame_context(render);
 
-    vulkan_backend_create_voxel_mesh(render);
+    render_vulkan_create_voxel_mesh(render);
 }
 
 void render_update(Render* render, World* world, f64 delta_time)
@@ -63,20 +69,24 @@ void render_update(Render* render, World* world, f64 delta_time)
     vec3 forward;
     camera_get_forward(&world->camera, forward);
 
-    vec3 up = {0.0f, 0.0f, 1.0f};
-
     vec3 center;
     glm_vec3_add(world->camera.position, forward, center);
 
     glm_mat4_identity(render->view_matrix);
 
-    look_at_lh(world->camera.position, center, up, render->view_matrix);
+    look_at_lh(world->camera.position, center, GLM_ZUP, render->view_matrix);
 
     glm_vec3_copy(world->camera.position, render->position);
+    glm_mat4_mul(render->projection_matrix, render->view_matrix, render->projection_view_matrix);
 }
 
 void render_draw(Render* render)
 {
+    render_begin_frame(render);
+    render_record_frame(render);
+    render_submit_frame(render);
+    render_present_frame(render);
+
     VulkanFrame* frame = &render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index];
 
     vkWaitForFences(
@@ -101,7 +111,7 @@ void render_draw(Render* render)
     vkResetFences(render->vulkan_device_context.device, 1, &frame->in_flight);
     vkResetCommandBuffer(frame->command_buffer, 0);
 
-    vulkan_backend_record_command_buffer(render, frame->command_buffer, image_index);
+    render_vulkan_record_command_buffer(render, frame->command_buffer, image_index);
 
     VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 

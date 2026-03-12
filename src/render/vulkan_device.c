@@ -7,18 +7,18 @@
 
 #include "core/log/log.h"
 
-void vulkan_backend_create_and_init_device_context(Render* render, Platform* platform)
+void render_vulkan_create_and_init_device_context(Render* render, Platform* platform)
 {
-    vulkan_backend_create_instance(render);
-    vulkan_backend_create_surface(render, platform);
-    vulkan_backend_choose_physical_device(render);
-    vulkan_backend_create_logical_device(render);
-    vulkan_backend_create_command_pool(render);
+    render_vulkan_create_instance(render);
+    render_vulkan_create_surface(render, platform);
+    render_vulkan_choose_physical_device(render);
+    render_vulkan_create_logical_device(render);
+    render_vulkan_create_command_pool(render);
 
     LOG_INFO("Vulkan Device Initialized");
 }
 
-void vulkan_backend_create_instance(Render* render)
+void render_vulkan_create_instance(Render* render)
 {
     u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
@@ -77,7 +77,7 @@ void vulkan_backend_create_instance(Render* render)
     free(required_extension_array);
 }
 
-void vulkan_backend_create_surface(Render* render, Platform* platform)
+void render_vulkan_create_surface(Render* render, Platform* platform)
 {
     render->vulkan_device_context.surface = 
         platform_create_vulkan_surface(
@@ -86,7 +86,7 @@ void vulkan_backend_create_surface(Render* render, Platform* platform)
         );
 }
 
-void vulkan_backend_choose_physical_device(Render* render)
+void render_vulkan_choose_physical_device(Render* render)
 {
     u32 device_count = 0;
 
@@ -162,7 +162,7 @@ void vulkan_backend_choose_physical_device(Render* render)
     LOG_FATAL("No suitable GPU found");
 }
 
-void vulkan_backend_create_logical_device(Render* render)
+void render_vulkan_create_logical_device(Render* render)
 {
     const f32 queue_priority = 1.0f;
 
@@ -211,7 +211,7 @@ void vulkan_backend_create_logical_device(Render* render)
     render->vulkan_device_context.present_queue = render->vulkan_device_context.graphics_queue;
 }
 
-void vulkan_backend_create_command_pool(Render* render)
+void render_vulkan_create_command_pool(Render* render)
 {
     VkCommandPoolCreateInfo command_pool_info = 
     {
@@ -228,7 +228,7 @@ void vulkan_backend_create_command_pool(Render* render)
     );
 }
 
-void vulkan_backend_destroy_device_context(Render* render)
+void render_vulkan_destroy_device_context(Render* render)
 {
     VkDevice device = render->vulkan_device_context.device;
     VkInstance instance = render->vulkan_device_context.instance;

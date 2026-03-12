@@ -1,6 +1,6 @@
 #include "render/render.h"
 
-VkCommandBuffer vulkan_backend_begin_single_time_commands(Render* render)
+VkCommandBuffer render_vulkan_begin_single_time_commands(Render* render)
 {
     VkCommandBufferAllocateInfo alloc_info = 
     {
@@ -29,7 +29,7 @@ VkCommandBuffer vulkan_backend_begin_single_time_commands(Render* render)
     return command_buffer;
 }
 
-void vulkan_backend_end_single_time_commands(Render* render, VkCommandBuffer command_buffer)
+void render_vulkan_end_single_time_commands(Render* render, VkCommandBuffer command_buffer)
 {
     vkEndCommandBuffer(command_buffer);
 

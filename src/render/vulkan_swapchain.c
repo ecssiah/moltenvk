@@ -2,22 +2,23 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 
 #include "core/log/log.h"
 
-void vulkan_backend_create_and_init_swapchain_context(Render* render)
+void render_vulkan_create_and_init_swapchain_context(Render* render)
 {
-    vulkan_backend_create_swapchain(render);
-    vulkan_backend_create_image_views(render);
-    vulkan_backend_create_render_pass(render);
-    vulkan_backend_create_depth_resources(render);
-    vulkan_backend_create_frame_buffers(render);
+    render_vulkan_create_swapchain(render);
+    render_vulkan_create_image_views(render);
+    render_vulkan_create_render_pass(render);
+    render_vulkan_create_depth_resources(render);
+    render_vulkan_create_frame_buffers(render);
 
     LOG_INFO("Vulkan Swapchain Initialized");
 }
 
-void vulkan_backend_create_swapchain(Render* render)
+void render_vulkan_create_swapchain(Render* render)
 {
     VkSurfaceCapabilitiesKHR surface_capabilities;
 
@@ -115,7 +116,7 @@ void vulkan_backend_create_swapchain(Render* render)
     );
 }
 
-void vulkan_backend_create_image_views(Render* render)
+void render_vulkan_create_image_views(Render* render)
 {
     for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
@@ -157,7 +158,7 @@ void vulkan_backend_create_image_views(Render* render)
     }
 }
 
-void vulkan_backend_create_render_pass(Render* render)
+void render_vulkan_create_render_pass(Render* render)
 {
     VkAttachmentDescription color_attachment =
     {
@@ -218,11 +219,11 @@ void vulkan_backend_create_render_pass(Render* render)
         render->vulkan_device_context.device, 
         &render_pass_info, 
         NULL, 
-        &render->voxel_pipeline_context.render_pass
+        &render->vulkan_swapchain_context.render_pass
     );
 }
 
-void vulkan_backend_create_depth_resources(Render* render)
+void render_vulkan_create_depth_resources(Render* render)
 {
     VkFormat depth_format = VK_FORMAT_D32_SFLOAT;
 
@@ -305,7 +306,7 @@ void vulkan_backend_create_depth_resources(Render* render)
     );
 }
 
-void vulkan_backend_create_frame_buffers(Render* render)
+void render_vulkan_create_frame_buffers(Render* render)
 {
     for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
@@ -330,7 +331,7 @@ void vulkan_backend_create_frame_buffers(Render* render)
         VkFramebufferCreateInfo framebuffer_info =
         {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .renderPass = render->voxel_pipeline_context.render_pass,
+            .renderPass = render->vulkan_swapchain_context.render_pass,
             .attachmentCount = 2,
             .pAttachments = attachments,
             .width = render->vulkan_swapchain_context.extent.width,
@@ -347,7 +348,7 @@ void vulkan_backend_create_frame_buffers(Render* render)
     }
 }
 
-void vulkan_backend_destroy_swapchain_context(Render* render)
+void render_vulkan_destroy_swapchain_context(Render* render)
 {
     for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
@@ -385,6 +386,12 @@ void vulkan_backend_destroy_swapchain_context(Render* render)
     vkFreeMemory(
         render->vulkan_device_context.device,
         render->vulkan_swapchain_context.depth_memory,
+        NULL
+    );
+
+    vkDestroyRenderPass(
+        render->vulkan_device_context.device, 
+        render->vulkan_swapchain_context.render_pass, 
         NULL
     );
 
