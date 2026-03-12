@@ -51,8 +51,15 @@ void app_run(App* app)
     while (platform_is_active(app->platform))
     {
         const double current_time = glfwGetTime();
+        
+        f64 delta_time = current_time - app->last_time;
+        
+        if (delta_time > 0.1)
+        {
+            delta_time = 0.1;
+        }
 
-        app->delta_time = current_time - app->last_time;
+        app->delta_time = delta_time;
         app->last_time = current_time;
 
         platform_update(app->platform);

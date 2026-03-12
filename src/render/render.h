@@ -24,51 +24,51 @@ static const Vertex cube_vertex_array[] =
 {
     // +X
     {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f}},
     {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f}},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f}},
     {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f}},
 
     // -X
     {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
     {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
     {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
 
     // +Y
     {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
     {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
     {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
 
     // -Y
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +1.0f }},
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +1.0f }},
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +0.0f }},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +1.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS }, { +0.0f, +0.0f }},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +1.0f, +1.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS }, { +0.0f, +1.0f }},
 
     // +Z
     {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
     {{ +CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +0.0f }},
-    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
     {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS, -CUBE_RADIUS, +CUBE_RADIUS}, { +0.0f, +1.0f }},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +0.0f }},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, +CUBE_RADIUS}, { +1.0f, +1.0f }},
 
     // -Z
     {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +1.0f}},
-    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
     {{ -CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +0.0f}},
-    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +1.0f}},
-    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +1.0f}},
     {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
+    {{ +CUBE_RADIUS, -CUBE_RADIUS, -CUBE_RADIUS}, { +0.0f, +1.0f}},
+    {{ -CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +0.0f}},
+    {{ +CUBE_RADIUS, +CUBE_RADIUS, -CUBE_RADIUS}, { +1.0f, +1.0f}},
 };
 
 typedef struct Image

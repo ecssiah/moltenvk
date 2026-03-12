@@ -61,6 +61,9 @@ bool platform_is_mouse_down(PlatformInput* platform_input, int button);
 bool platform_is_mouse_pressed(PlatformInput* platform_input, int button);
 bool platform_is_mouse_released(PlatformInput* platform_input, int button);
 
+f64 platform_mouse_delta_x(PlatformInput* platform_input);
+f64 platform_mouse_delta_y(PlatformInput* platform_input);
+
 VkSurfaceKHR platform_create_vulkan_surface(Platform* platform, VkInstance instance);
 
 #endif

@@ -109,6 +109,12 @@ static void platform_window_init(PlatformWindow* platform_window)
         NULL
     );
 
+    glfwSetInputMode(
+        platform_window->glfw_window, 
+        GLFW_CURSOR, 
+        GLFW_CURSOR_DISABLED
+    );
+
     int width, height;
     glfwGetFramebufferSize(platform_window->glfw_window, &width, &height);
 

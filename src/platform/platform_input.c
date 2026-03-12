@@ -67,3 +67,14 @@ bool platform_is_mouse_released(PlatformInput* platform_input, int button)
 {
     return !platform_input->current_mouse_array[button] && platform_input->previous_mouse_array[button];
 }
+
+f64 platform_mouse_delta_x(PlatformInput* platform_input)
+{
+    return platform_input->current_mouse_x - platform_input->previous_mouse_x;
+}
+
+f64 platform_mouse_delta_y(PlatformInput* platform_input)
+{
+    return platform_input->current_mouse_y - platform_input->previous_mouse_y;
+}
+

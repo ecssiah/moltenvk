@@ -2,7 +2,9 @@
 
 #include <stdio.h>
 
+#include "app/camera.h"
 #include "core/log/log.h"
+#include "platform/platform.h"
 
 World* world_create(void)
 {
@@ -18,8 +20,7 @@ void world_destroy(World* world)
 
 void world_init(World* world)
 {
-    glm_vec3_zero(world->camera.position);
-    glm_mat4_identity(world->camera.orientation);
+
 }
 
 void world_update(World* world, Platform* platform, f64 delta_time)
@@ -57,10 +58,50 @@ void world_update(World* world, Platform* platform, f64 delta_time)
         input_value[2] -= 1.0f;
     }
 
-    const float camera_speed = 1.0f;
+    vec3 forward;
+    camera_get_forward(&world->camera, forward);
 
-    glm_vec3_scale(input_value, camera_speed, input_value);
-    glm_vec3_scale(input_value, delta_time, input_value);
+    vec3 right;
+    camera_get_right(&world->camera, right);
+
+    vec3 up;
+    camera_get_up(&world->camera, up);
     
-    glm_vec3_add(input_value, world->camera.position, world->camera.position);
+    const f32 camera_speed = 1.0f;
+    vec3 camera_position_delta = {0.0f, 0.0f, 0.0f};
+
+    vec3 velocity_forward;
+    glm_vec3_scale(forward, input_value[0] * camera_speed * delta_time, velocity_forward);
+    glm_vec3_add(camera_position_delta, velocity_forward, camera_position_delta);
+
+    vec3 velocity_right;
+    glm_vec3_scale(right, input_value[1] * camera_speed * delta_time, velocity_right);
+    glm_vec3_add(camera_position_delta, velocity_right, camera_position_delta);
+
+    vec3 velocity_up;
+    glm_vec3_scale(up, input_value[2] * camera_speed * delta_time, velocity_up);
+    glm_vec3_add(camera_position_delta, velocity_up, camera_position_delta);
+
+    glm_vec3_add(world->camera.position, camera_position_delta, world->camera.position);
+
+    const f32 sensitivity = 12.0f;
+
+    const f64 mouse_delta_x = platform_mouse_delta_x(&platform->platform_input);
+    const f64 mouse_delta_y = platform_mouse_delta_y(&platform->platform_input);
+
+    if (mouse_delta_x < 50.0f)
+    {
+        camera_set_rotation_z(
+            &world->camera, 
+            world->camera.rotation_angles[2] - mouse_delta_x * sensitivity * delta_time
+        );
+    }
+
+    if (mouse_delta_y < 50.0f)
+    {
+        camera_set_rotation_y(
+            &world->camera, 
+            world->camera.rotation_angles[1] - mouse_delta_y * sensitivity * delta_time
+        );
+    }
 }

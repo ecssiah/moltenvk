@@ -158,9 +158,6 @@ void vulkan_backend_record_command_buffer(Render* render, VkCommandBuffer comman
     glm_mat4_mul(render->projection_matrix, render->view_matrix, render->projection_view_matrix);
     glm_mat4_copy(render->projection_view_matrix, push_constants.projection_view_matrix);
 
-    glm_mat4_print(render->view_matrix, stdout);
-    // glm_mat4_print(push_constants.projection_view_matrix, stdout);
-
     vkCmdPushConstants(
         render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index].command_buffer,
         render->voxel_pipeline_context.layout,
