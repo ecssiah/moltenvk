@@ -1,8 +1,8 @@
-#include "core/log/log.h"
-#include "world_internal.h"
+#include "app/world/world.h"
 
-#include "platform/platform_internal.h"
 #include <stdio.h>
+
+#include "core/log/log.h"
 
 World* world_create(void)
 {
@@ -61,6 +61,4 @@ void world_update(World* world, Platform* platform)
 
     glm_vec3_scale(input_value, camera_speed, input_value);
     glm_vec3_add(input_value, world->camera.position, world->camera.position);
-
-    glm_vec3_print(world->camera.position, stdout);
 }

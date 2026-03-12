@@ -9,4 +9,6 @@ typedef struct {
 }
 Camera;
 
+void camera_get_forward(Camera* camera, vec3 out_forward);
+
 #endif

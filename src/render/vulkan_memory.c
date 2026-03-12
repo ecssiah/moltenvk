@@ -1,22 +1,20 @@
-#include "core/log/log.h"
-#include "vulkan_backend_internal.h"
+#include "render/render.h"
 
 #include <string.h>
 #include <vulkan/vulkan_core.h>
-
 #include "stb/stb_image.h"
 
-#include "render/render_internal.h"
+#include "core/log/log.h"
 
 u32 vulkan_backend_locate_memory_type(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     u32 type_filter,
     VkMemoryPropertyFlags properties
 ) {
     VkPhysicalDeviceMemoryProperties mem_properties;
 
     vkGetPhysicalDeviceMemoryProperties(
-        vulkan_backend->vulkan_device_context.physical_device,
+        render->vulkan_device_context.physical_device,
         &mem_properties
     );
 
@@ -34,7 +32,7 @@ u32 vulkan_backend_locate_memory_type(
 }
 
 void vulkan_backend_create_buffer(
-    VulkanBackend* backend,
+    Render* render,
     VkDeviceSize size,
     VkBufferUsageFlags usage,
     VkMemoryPropertyFlags properties,
@@ -50,7 +48,7 @@ void vulkan_backend_create_buffer(
     };
 
     vkCreateBuffer(
-        backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &buffer_info,
         NULL,
         buffer
@@ -59,13 +57,13 @@ void vulkan_backend_create_buffer(
     VkMemoryRequirements mem_requirements;
 
     vkGetBufferMemoryRequirements(
-        backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         *buffer,
         &mem_requirements
     );
 
     u32 memory_type_index = vulkan_backend_locate_memory_type(
-        backend,
+        render,
         mem_requirements.memoryTypeBits,
         properties
     );
@@ -83,14 +81,14 @@ void vulkan_backend_create_buffer(
     };
 
     vkAllocateMemory(
-        backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &alloc_info,
         NULL,
         memory
     );
 
     vkBindBufferMemory(
-        backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         *buffer,
         *memory,
         0
@@ -98,7 +96,7 @@ void vulkan_backend_create_buffer(
 }
 
 void vulkan_backend_create_image(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     u32 width,
     u32 height,
     VkFormat format,
@@ -128,7 +126,7 @@ void vulkan_backend_create_image(
     };
 
     vkCreateImage(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &image_info,
         NULL,
         image
@@ -137,13 +135,13 @@ void vulkan_backend_create_image(
     VkMemoryRequirements mem_requirements;
 
     vkGetImageMemoryRequirements(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         *image,
         &mem_requirements
     );
 
     u32 memory_type_index = vulkan_backend_locate_memory_type(
-        vulkan_backend,
+        render,
         mem_requirements.memoryTypeBits,
         properties
     );
@@ -161,14 +159,14 @@ void vulkan_backend_create_image(
     };
 
     vkAllocateMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &alloc_info,
         NULL,
         memory
     );
 
     vkBindImageMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         *image,
         *memory,
         0
@@ -176,7 +174,7 @@ void vulkan_backend_create_image(
 }
 
 VkImageView vulkan_backend_create_image_view(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     VkImage image,
     VkFormat format
 ) {
@@ -204,7 +202,7 @@ VkImageView vulkan_backend_create_image_view(
     VkImageView image_view;
 
     vkCreateImageView(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &view_info,
         NULL,
         &image_view
@@ -213,7 +211,7 @@ VkImageView vulkan_backend_create_image_view(
     return image_view;
 }
 
-VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
+VkSampler vulkan_backend_create_sampler(Render* render)
 {
     VkSamplerCreateInfo sampler_info =
     {
@@ -244,7 +242,7 @@ VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
     VkSampler sampler;
 
     vkCreateSampler(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &sampler_info,
         NULL,
         &sampler
@@ -254,13 +252,13 @@ VkSampler vulkan_backend_create_sampler(VulkanBackend* vulkan_backend)
 }
 
 void vulkan_backend_transition_image_layout(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     VkImage image,
     VkFormat format,
     VkImageLayout old_layout,
     VkImageLayout new_layout
 ) {
-    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(vulkan_backend);
+    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(render);
 
     VkImageMemoryBarrier barrier =
     {
@@ -348,16 +346,16 @@ void vulkan_backend_transition_image_layout(
         &barrier
     );
 
-    vulkan_backend_end_single_time_commands(vulkan_backend, command_buffer);
+    vulkan_backend_end_single_time_commands(render, command_buffer);
 }
 
 void vulkan_backend_copy_buffer(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     VkBuffer src_buffer,
     VkBuffer dst_buffer,
     VkDeviceSize size
 ) {
-    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(vulkan_backend);
+    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(render);
 
     VkBufferCopy copy_region =
     {
@@ -374,17 +372,17 @@ void vulkan_backend_copy_buffer(
         &copy_region
     );
 
-    vulkan_backend_end_single_time_commands(vulkan_backend, command_buffer);
+    vulkan_backend_end_single_time_commands(render, command_buffer);
 }
 
 void vulkan_backend_copy_buffer_to_image(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     VkBuffer buffer,
     VkImage image,
     u32 width,
     u32 height
 ) {
-    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(vulkan_backend);
+    VkCommandBuffer command_buffer = vulkan_backend_begin_single_time_commands(render);
 
     VkBufferImageCopy region =
     {
@@ -418,11 +416,11 @@ void vulkan_backend_copy_buffer_to_image(
         &region
     );
 
-    vulkan_backend_end_single_time_commands(vulkan_backend, command_buffer);
+    vulkan_backend_end_single_time_commands(render, command_buffer);
 }
 
 void vulkan_backend_create_texture_from_pixels(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     const void* pixels,
     u32 width,
     u32 height,
@@ -437,7 +435,7 @@ void vulkan_backend_create_texture_from_pixels(
     VkDeviceMemory staging_memory;
 
     vulkan_backend_create_buffer(
-        vulkan_backend,
+        render,
         image_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -447,7 +445,7 @@ void vulkan_backend_create_texture_from_pixels(
 
     void* data;
     vkMapMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         staging_memory,
         0,
         image_size,
@@ -458,12 +456,12 @@ void vulkan_backend_create_texture_from_pixels(
     memcpy(data, pixels, (size_t)image_size);
 
     vkUnmapMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         staging_memory
     );
 
     vulkan_backend_create_image(
-        vulkan_backend,
+        render,
         width,
         height,
         VK_FORMAT_R8G8B8A8_UNORM,
@@ -475,7 +473,7 @@ void vulkan_backend_create_texture_from_pixels(
     );
 
     vulkan_backend_transition_image_layout(
-        vulkan_backend,
+        render,
         *image,
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_LAYOUT_UNDEFINED,
@@ -483,7 +481,7 @@ void vulkan_backend_create_texture_from_pixels(
     );
 
     vulkan_backend_copy_buffer_to_image(
-        vulkan_backend,
+        render,
         staging_buffer,
         *image,
         width,
@@ -491,7 +489,7 @@ void vulkan_backend_create_texture_from_pixels(
     );
 
     vulkan_backend_transition_image_layout(
-        vulkan_backend,
+        render,
         *image,
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -499,28 +497,28 @@ void vulkan_backend_create_texture_from_pixels(
     );
 
     *image_view = vulkan_backend_create_image_view(
-        vulkan_backend,
+        render,
         *image,
         VK_FORMAT_R8G8B8A8_UNORM
     );
 
-    *sampler = vulkan_backend_create_sampler(vulkan_backend);
+    *sampler = vulkan_backend_create_sampler(render);
 
     vkDestroyBuffer(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         staging_buffer,
         NULL
     );
 
     vkFreeMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         staging_memory,
         NULL
     );
 }
 
 void vulkan_backend_create_texture_from_file(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     const char* path,
     VkImage* image,
     VkDeviceMemory* image_memory,
@@ -548,7 +546,7 @@ void vulkan_backend_create_texture_from_file(
     }
 
     vulkan_backend_create_texture_from_pixels(
-        vulkan_backend,
+        render,
         pixel_array,
         (u32)width,
         (u32)height,
@@ -561,12 +559,12 @@ void vulkan_backend_create_texture_from_file(
     stbi_image_free(pixel_array);
 }
 
-void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_voxel_mesh(Render* render)
 {
-    VulkanTexture* vulkan_texture = &vulkan_backend->voxel_pipeline_context.vulkan_texture;
+    VulkanTexture* vulkan_texture = &render->voxel_pipeline_context.vulkan_texture;
 
     vulkan_backend_create_texture_from_file(
-        vulkan_backend,
+        render,
         "assets/textures/lion.png",
         &vulkan_texture->image,
         &vulkan_texture->image_memory,
@@ -575,7 +573,7 @@ void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend)
     );
 
     vulkan_backend_update_texture_descriptor(
-        vulkan_backend,
+        render,
         vulkan_texture->image_view,
         vulkan_texture->sampler
     );
@@ -586,7 +584,7 @@ void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend)
     VkDeviceSize buffer_size = sizeof(cube_vertex_array);
 
     vulkan_backend_create_buffer(
-        vulkan_backend,
+        render,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -598,7 +596,7 @@ void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend)
     void* data;
 
     vkMapMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         staging_memory,
         0,
         buffer_size,
@@ -609,27 +607,27 @@ void vulkan_backend_create_voxel_mesh(VulkanBackend* vulkan_backend)
     memcpy(data, cube_vertex_array, buffer_size);
 
     vkUnmapMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         staging_memory
     );
 
     vulkan_backend_create_buffer(
-        vulkan_backend,
+        render,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        &vulkan_backend->voxel_pipeline_context.vertex_buffer,
-        &vulkan_backend->voxel_pipeline_context.vertex_memory
+        &render->voxel_pipeline_context.vertex_buffer,
+        &render->voxel_pipeline_context.vertex_memory
     );
 
     vulkan_backend_copy_buffer(
-        vulkan_backend,
+        render,
         staging_buffer,
-        vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        render->voxel_pipeline_context.vertex_buffer,
         buffer_size
     );
 
-    vkDestroyBuffer(vulkan_backend->vulkan_device_context.device, staging_buffer, NULL);
-    vkFreeMemory(vulkan_backend->vulkan_device_context.device, staging_memory, NULL);
+    vkDestroyBuffer(render->vulkan_device_context.device, staging_buffer, NULL);
+    vkFreeMemory(render->vulkan_device_context.device, staging_memory, NULL);
 }

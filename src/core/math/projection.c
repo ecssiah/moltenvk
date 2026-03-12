@@ -7,7 +7,10 @@ void perspective_lh(float fovy_radians, float aspect, float near_plane, float fa
     glm_mat4_zero(out_projection_matrix);
 
     out_projection_matrix[0][0] = focal_length_scale_factor / aspect;
+
     out_projection_matrix[1][1] = focal_length_scale_factor;
+    out_projection_matrix[1][1] *= -1;
+
     out_projection_matrix[2][2] = far_plane / (far_plane - near_plane);
 
     out_projection_matrix[2][3] = 1.0f;
@@ -21,7 +24,10 @@ void perspective_rh(float fovy_radians, float aspect, float near_plane, float fa
     glm_mat4_zero(out_projection_matrix);
 
     out_projection_matrix[0][0] = focal_length_scale_factor / aspect;
+
     out_projection_matrix[1][1] = focal_length_scale_factor;
+    out_projection_matrix[1][1] *= -1;
+    
     out_projection_matrix[2][2] = far_plane / (near_plane - far_plane);
 
     out_projection_matrix[2][3] = -1.0f;

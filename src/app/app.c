@@ -9,12 +9,12 @@
 #include "platform/platform.h"
 #include "app/world/world.h"
 
-App* app_create()
+App* app_create(void)
 {
     App* app = malloc(sizeof (*app));
 
     app->platform = platform_create();
-    app->render = render_create();
+    app->render = render_create(app->platform);
 
     app->world = world_create();
 
@@ -48,8 +48,10 @@ void app_run(App* app)
     while (platform_is_active(app->platform))
     {
         platform_update(app->platform);
-        render_update(app->render);
-
+        
         world_update(app->world, app->platform);
+
+        render_update(app->render, app->world);
+        render_draw(app->render);
     }
 }

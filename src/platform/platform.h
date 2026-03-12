@@ -2,18 +2,54 @@
 #define PLATFORM_H 1
 
 #include <stdbool.h>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
-#include <vulkan/vulkan.h>
+#include "core/types.h"
 
-typedef struct PlatformInput PlatformInput;
-typedef struct PlatformWindow PlatformWindow;
-typedef struct Platform Platform;
+#define WINDOW_WIDTH    1024
+#define WINDOW_HEIGHT   768
 
-Platform* platform_create();
+typedef struct PlatformInput
+{
+    bool current_key_array[GLFW_KEY_LAST + 1];
+    bool previous_key_array[GLFW_KEY_LAST + 1];
+    
+    bool current_mouse_array[GLFW_MOUSE_BUTTON_LAST + 1];
+    bool previous_mouse_array[GLFW_MOUSE_BUTTON_LAST + 1];
+
+    f64 current_mouse_x;
+    f64 current_mouse_y;
+    f64 previous_mouse_x;
+    f64 previous_mouse_y;
+}
+PlatformInput;
+
+typedef struct PlatformWindow
+{
+    struct GLFWwindow* glfw_window;
+
+    u32 width;
+    u32 height;
+    bool close_requested;
+}
+PlatformWindow;
+
+typedef struct Platform
+{
+    struct PlatformInput platform_input;
+    struct PlatformWindow platform_window;
+}
+Platform;
+
+Platform* platform_create(void);
 void platform_destroy(Platform* platform);
 
 void platform_init(Platform* platform);
 void platform_update(Platform* platform);
+
+void platform_poll_events(struct PlatformWindow* platform_window);
+void platform_record_input(struct PlatformInput* platform_input, struct PlatformWindow* platform_window);
 
 bool platform_is_active(Platform* platform);
 

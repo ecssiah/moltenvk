@@ -1,10 +1,9 @@
-#include <stdint.h>
+#include "render/render.h"
 
+#include <stdint.h>
 #include "stb/stb_image.h"
 
 #include "core/types.h"
-#include "render/render.h"
-#include "render/render_internal.h"
 
 Image render_image_load(const char* path)
 {

@@ -1,4 +1,4 @@
-#include "platform/platform_internal.h"
+#include "platform/platform.h"
 
 #include <stdlib.h>
 
@@ -7,7 +7,7 @@
 static void platform_input_init(PlatformInput* platform_input);
 static void platform_window_init(PlatformWindow* platform_window);
 
-Platform* platform_create()
+Platform* platform_create(void)
 {
     Platform* platform = malloc(sizeof(*platform));
 

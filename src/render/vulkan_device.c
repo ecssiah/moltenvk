@@ -1,25 +1,24 @@
-#include "backend/vulkan/vulkan_backend.h"
-#include "vulkan_backend_internal.h"
+#include "render/render.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan_core.h>
 
 #include "core/log/log.h"
 
-void vulkan_backend_create_device_context(VulkanBackend* vulkan_backend, Platform* platform)
+void vulkan_backend_create_and_init_device_context(Render* render, Platform* platform)
 {
-    vulkan_backend_create_instance(vulkan_backend);
-    vulkan_backend_create_surface(vulkan_backend, platform);
-    vulkan_backend_choose_physical_device(vulkan_backend);
-    vulkan_backend_create_logical_device(vulkan_backend);
-    vulkan_backend_create_command_pool(vulkan_backend);
+    vulkan_backend_create_instance(render);
+    vulkan_backend_create_surface(render, platform);
+    vulkan_backend_choose_physical_device(render);
+    vulkan_backend_create_logical_device(render);
+    vulkan_backend_create_command_pool(render);
 
     LOG_INFO("Vulkan Device Initialized");
 }
 
-void vulkan_backend_create_instance(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_instance(Render* render)
 {
     u32 extension_count = 0;
     const char** extension_array = glfwGetRequiredInstanceExtensions(&extension_count);
@@ -65,7 +64,7 @@ void vulkan_backend_create_instance(VulkanBackend* vulkan_backend)
         vkCreateInstance(
             &instance_create_info, 
             NULL, 
-            &vulkan_backend->vulkan_device_context.instance
+            &render->vulkan_device_context.instance
         );
 
     if (instance_result != VK_SUCCESS) 
@@ -78,21 +77,21 @@ void vulkan_backend_create_instance(VulkanBackend* vulkan_backend)
     free(required_extension_array);
 }
 
-void vulkan_backend_create_surface(VulkanBackend* vulkan_backend, Platform* platform)
+void vulkan_backend_create_surface(Render* render, Platform* platform)
 {
-    vulkan_backend->vulkan_device_context.surface = 
+    render->vulkan_device_context.surface = 
         platform_create_vulkan_surface(
             platform, 
-            vulkan_backend->vulkan_device_context.instance
+            render->vulkan_device_context.instance
         );
 }
 
-void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend)
+void vulkan_backend_choose_physical_device(Render* render)
 {
     u32 device_count = 0;
 
     vkEnumeratePhysicalDevices(
-        vulkan_backend->vulkan_device_context.instance, 
+        render->vulkan_device_context.instance, 
         &device_count, 
         NULL
     );
@@ -105,7 +104,7 @@ void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend)
     VkPhysicalDevice* physical_device_array = malloc(sizeof (VkPhysicalDevice) * device_count);
 
     vkEnumeratePhysicalDevices(
-        vulkan_backend->vulkan_device_context.instance, 
+        render->vulkan_device_context.instance, 
         &device_count, 
         physical_device_array
     );
@@ -137,7 +136,7 @@ void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend)
             vkGetPhysicalDeviceSurfaceSupportKHR(
                 device, 
                 queue_family_index, 
-                vulkan_backend->vulkan_device_context.surface, 
+                render->vulkan_device_context.surface, 
                 &present_support
             );
 
@@ -145,8 +144,8 @@ void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend)
                 (queue_family_properties_array[queue_family_index].queueFlags & VK_QUEUE_GRAPHICS_BIT) && 
                 present_support
             ) {
-                vulkan_backend->vulkan_device_context.physical_device = device;
-                vulkan_backend->vulkan_device_context.graphics_queue_family_index = queue_family_index;
+                render->vulkan_device_context.physical_device = device;
+                render->vulkan_device_context.graphics_queue_family_index = queue_family_index;
 
                 free(queue_family_properties_array);
                 free(physical_device_array);
@@ -163,13 +162,13 @@ void vulkan_backend_choose_physical_device(VulkanBackend* vulkan_backend)
     LOG_FATAL("No suitable GPU found");
 }
 
-void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_logical_device(Render* render)
 {
     const f32 queue_priority = 1.0f;
 
     VkDeviceQueueCreateInfo device_queue_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index,
+        .queueFamilyIndex = render->vulkan_device_context.graphics_queue_family_index,
         .queueCount = 1,
         .pQueuePriorities = &queue_priority,
     };
@@ -191,10 +190,10 @@ void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend)
 
     VkResult device_result = 
         vkCreateDevice(
-            vulkan_backend->vulkan_device_context.physical_device, 
+            render->vulkan_device_context.physical_device, 
             &device_info, 
             NULL, 
-            &vulkan_backend->vulkan_device_context.device
+            &render->vulkan_device_context.device
         );
 
     if (device_result != VK_SUCCESS)
@@ -203,39 +202,39 @@ void vulkan_backend_create_logical_device(VulkanBackend* vulkan_backend)
     }
 
     vkGetDeviceQueue(
-        vulkan_backend->vulkan_device_context.device, 
-        vulkan_backend->vulkan_device_context.graphics_queue_family_index, 
+        render->vulkan_device_context.device, 
+        render->vulkan_device_context.graphics_queue_family_index, 
         0, 
-        &vulkan_backend->vulkan_device_context.graphics_queue
+        &render->vulkan_device_context.graphics_queue
     );
 
-    vulkan_backend->vulkan_device_context.present_queue = vulkan_backend->vulkan_device_context.graphics_queue;
+    render->vulkan_device_context.present_queue = render->vulkan_device_context.graphics_queue;
 }
 
-void vulkan_backend_create_command_pool(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_command_pool(Render* render)
 {
     VkCommandPoolCreateInfo command_pool_info = 
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = vulkan_backend->vulkan_device_context.graphics_queue_family_index,
+        .queueFamilyIndex = render->vulkan_device_context.graphics_queue_family_index,
     };
 
     vkCreateCommandPool(
-        vulkan_backend->vulkan_device_context.device, 
+        render->vulkan_device_context.device, 
         &command_pool_info, 
         NULL, 
-        &vulkan_backend->vulkan_device_context.command_pool
+        &render->vulkan_device_context.command_pool
     );
 }
 
-void vulkan_backend_destroy_device_context(VulkanBackend* vulkan_backend)
+void vulkan_backend_destroy_device_context(Render* render)
 {
-    VkDevice device = vulkan_backend->vulkan_device_context.device;
-    VkInstance instance = vulkan_backend->vulkan_device_context.instance;
+    VkDevice device = render->vulkan_device_context.device;
+    VkInstance instance = render->vulkan_device_context.instance;
 
-    vkDestroyCommandPool(device, vulkan_backend->vulkan_device_context.command_pool, NULL);
+    vkDestroyCommandPool(device, render->vulkan_device_context.command_pool, NULL);
     vkDestroyDevice(device, NULL);
-    vkDestroySurfaceKHR(instance, vulkan_backend->vulkan_device_context.surface, NULL);
+    vkDestroySurfaceKHR(instance, render->vulkan_device_context.surface, NULL);
     vkDestroyInstance(instance, NULL);
 }

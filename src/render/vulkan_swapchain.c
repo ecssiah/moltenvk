@@ -1,38 +1,38 @@
-#include "core/log/log.h"
-#include "vulkan_backend.h"
-#include "vulkan_backend_internal.h"
+#include "render/render.h"
 
 #include <vulkan/vulkan.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <vulkan/vulkan_core.h>
 
-void vulkan_backend_create_swapchain_context(VulkanBackend* vulkan_backend)
+#include "core/log/log.h"
+
+void vulkan_backend_create_and_init_swapchain_context(Render* render)
 {
-    vulkan_backend_create_swapchain(vulkan_backend);
-    vulkan_backend_create_image_views(vulkan_backend);
-    vulkan_backend_create_render_pass(vulkan_backend);
-    vulkan_backend_create_depth_resources(vulkan_backend);
-    vulkan_backend_create_frame_buffers(vulkan_backend);
+    vulkan_backend_create_swapchain(render);
+    vulkan_backend_create_image_views(render);
+    vulkan_backend_create_render_pass(render);
+    vulkan_backend_create_depth_resources(render);
+    vulkan_backend_create_frame_buffers(render);
 
     LOG_INFO("Vulkan Swapchain Initialized");
 }
 
-void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_swapchain(Render* render)
 {
     VkSurfaceCapabilitiesKHR surface_capabilities;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-        vulkan_backend->vulkan_device_context.physical_device, 
-        vulkan_backend->vulkan_device_context.surface, 
+        render->vulkan_device_context.physical_device, 
+        render->vulkan_device_context.surface, 
         &surface_capabilities
     );
 
     u32 format_count;
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(
-        vulkan_backend->vulkan_device_context.physical_device, 
-        vulkan_backend->vulkan_device_context.surface, 
+        render->vulkan_device_context.physical_device, 
+        render->vulkan_device_context.surface, 
         &format_count, 
         NULL
     );
@@ -40,26 +40,26 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
     VkSurfaceFormatKHR* surface_format_array = malloc(sizeof (VkSurfaceFormatKHR) * format_count);
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(
-        vulkan_backend->vulkan_device_context.physical_device,
-        vulkan_backend->vulkan_device_context.surface,
+        render->vulkan_device_context.physical_device,
+        render->vulkan_device_context.surface,
         &format_count,
         surface_format_array
     );
 
     VkSurfaceFormatKHR surface_format = surface_format_array[0];
-    vulkan_backend->vulkan_swapchain_context.format = surface_format.format;
-    vulkan_backend->vulkan_swapchain_context.extent = surface_capabilities.currentExtent;
+    render->vulkan_swapchain_context.format = surface_format.format;
+    render->vulkan_swapchain_context.extent = surface_capabilities.currentExtent;
 
     free(surface_format_array);
 
     VkSwapchainCreateInfoKHR instance_create_info =
     {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .surface = vulkan_backend->vulkan_device_context.surface,
+        .surface = render->vulkan_device_context.surface,
         .minImageCount = 0,
         .imageFormat = surface_format.format,
         .imageColorSpace = surface_format.colorSpace,
-        .imageExtent = vulkan_backend->vulkan_swapchain_context.extent,
+        .imageExtent = render->vulkan_swapchain_context.extent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -81,10 +81,10 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
 
     VkResult swapchain_result =
         vkCreateSwapchainKHR(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             &instance_create_info, 
             NULL, 
-            &vulkan_backend->vulkan_swapchain_context.swapchain
+            &render->vulkan_swapchain_context.swapchain
         );
 
     if (swapchain_result != VK_SUCCESS)
@@ -95,30 +95,30 @@ void vulkan_backend_create_swapchain(VulkanBackend* vulkan_backend)
     u32 image_count = 0;
 
     vkGetSwapchainImagesKHR(
-        vulkan_backend->vulkan_device_context.device, 
-        vulkan_backend->vulkan_swapchain_context.swapchain, 
+        render->vulkan_device_context.device, 
+        render->vulkan_swapchain_context.swapchain, 
         &image_count, 
         NULL
     );
     
-    vulkan_backend->vulkan_swapchain_context.image_count = image_count;
+    render->vulkan_swapchain_context.image_count = image_count;
 
-    vulkan_backend->vulkan_swapchain_context.image_array = malloc(sizeof (VkImage) * image_count);
-    vulkan_backend->vulkan_swapchain_context.image_view_array = malloc(sizeof (VkImageView) * image_count);
-    vulkan_backend->vulkan_swapchain_context.framebuffer_array = malloc(sizeof (VkFramebuffer) * image_count);
-    vulkan_backend->vulkan_swapchain_context.render_finished_array = malloc(sizeof(VkSemaphore) * image_count);
+    render->vulkan_swapchain_context.image_array = malloc(sizeof (VkImage) * image_count);
+    render->vulkan_swapchain_context.image_view_array = malloc(sizeof (VkImageView) * image_count);
+    render->vulkan_swapchain_context.framebuffer_array = malloc(sizeof (VkFramebuffer) * image_count);
+    render->vulkan_swapchain_context.render_finished_array = malloc(sizeof(VkSemaphore) * image_count);
 
     vkGetSwapchainImagesKHR(
-        vulkan_backend->vulkan_device_context.device, 
-        vulkan_backend->vulkan_swapchain_context.swapchain, 
+        render->vulkan_device_context.device, 
+        render->vulkan_swapchain_context.swapchain, 
         &image_count, 
-        vulkan_backend->vulkan_swapchain_context.image_array
+        render->vulkan_swapchain_context.image_array
     );
 }
 
-void vulkan_backend_create_image_views(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_image_views(Render* render)
 {
-    for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
+    for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
         VkComponentMapping component_mapping = 
         {
@@ -142,27 +142,27 @@ void vulkan_backend_create_image_views(VulkanBackend* vulkan_backend)
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .pNext = NULL,
             .flags = 0,
-            .image = vulkan_backend->vulkan_swapchain_context.image_array[image_index],
+            .image = render->vulkan_swapchain_context.image_array[image_index],
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = vulkan_backend->vulkan_swapchain_context.format,
+            .format = render->vulkan_swapchain_context.format,
             .components = component_mapping,
             .subresourceRange = image_subresource_range,
         };
 
         vkCreateImageView(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             &image_view_create_info, 
             NULL, 
-            &vulkan_backend->vulkan_swapchain_context.image_view_array[image_index]
+            &render->vulkan_swapchain_context.image_view_array[image_index]
         );
     }
 }
 
-void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_render_pass(Render* render)
 {
     VkAttachmentDescription color_attachment =
     {
-        .format = vulkan_backend->vulkan_swapchain_context.format,
+        .format = render->vulkan_swapchain_context.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -216,14 +216,14 @@ void vulkan_backend_create_render_pass(VulkanBackend* vulkan_backend)
     };
 
     vkCreateRenderPass(
-        vulkan_backend->vulkan_device_context.device, 
+        render->vulkan_device_context.device, 
         &render_pass_info, 
         NULL, 
-        &vulkan_backend->voxel_pipeline_context.render_pass
+        &render->voxel_pipeline_context.render_pass
     );
 }
 
-void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_depth_resources(Render* render)
 {
     VkFormat depth_format = VK_FORMAT_D32_SFLOAT;
 
@@ -233,8 +233,8 @@ void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend)
         .imageType = VK_IMAGE_TYPE_2D,
         .extent =
         {
-            vulkan_backend->vulkan_swapchain_context.extent.width,
-            vulkan_backend->vulkan_swapchain_context.extent.height,
+            render->vulkan_swapchain_context.extent.width,
+            render->vulkan_swapchain_context.extent.height,
             1
         },
         .mipLevels = 1,
@@ -248,16 +248,16 @@ void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend)
     };
 
     vkCreateImage(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &image_info,
         NULL,
-        &vulkan_backend->vulkan_swapchain_context.depth_image
+        &render->vulkan_swapchain_context.depth_image
     );
 
     VkMemoryRequirements mem_requirements;
     vkGetImageMemoryRequirements(
-        vulkan_backend->vulkan_device_context.device,
-        vulkan_backend->vulkan_swapchain_context.depth_image,
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.depth_image,
         &mem_requirements
     );
 
@@ -269,23 +269,23 @@ void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend)
     };
 
     vkAllocateMemory(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &alloc_info,
         NULL,
-        &vulkan_backend->vulkan_swapchain_context.depth_memory
+        &render->vulkan_swapchain_context.depth_memory
     );
 
     vkBindImageMemory(
-        vulkan_backend->vulkan_device_context.device,
-        vulkan_backend->vulkan_swapchain_context.depth_image,
-        vulkan_backend->vulkan_swapchain_context.depth_memory,
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.depth_image,
+        render->vulkan_swapchain_context.depth_memory,
         0
     );
 
     VkImageViewCreateInfo view_info =
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = vulkan_backend->vulkan_swapchain_context.depth_image,
+        .image = render->vulkan_swapchain_context.depth_image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = depth_format,
         .subresourceRange =
@@ -299,16 +299,16 @@ void vulkan_backend_create_depth_resources(VulkanBackend* vulkan_backend)
     };
 
     vkCreateImageView(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         &view_info,
         NULL,
-        &vulkan_backend->vulkan_swapchain_context.depth_image_view
+        &render->vulkan_swapchain_context.depth_image_view
     );
 }
 
-void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_frame_buffers(Render* render)
 {
-    for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
+    for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
         VkSemaphoreCreateInfo semaphore_create_info = 
         {
@@ -316,87 +316,87 @@ void vulkan_backend_create_frame_buffers(VulkanBackend* vulkan_backend)
         };
 
         vkCreateSemaphore(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             &semaphore_create_info, 
             NULL, 
-            &vulkan_backend->vulkan_swapchain_context.render_finished_array[image_index]
+            &render->vulkan_swapchain_context.render_finished_array[image_index]
         );
 
         VkImageView attachments[2] =
         {
-            vulkan_backend->vulkan_swapchain_context.image_view_array[image_index],
-            vulkan_backend->vulkan_swapchain_context.depth_image_view
+            render->vulkan_swapchain_context.image_view_array[image_index],
+            render->vulkan_swapchain_context.depth_image_view
         };
 
         VkFramebufferCreateInfo framebuffer_info =
         {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
+            .renderPass = render->voxel_pipeline_context.render_pass,
             .attachmentCount = 2,
             .pAttachments = attachments,
-            .width = vulkan_backend->vulkan_swapchain_context.extent.width,
-            .height = vulkan_backend->vulkan_swapchain_context.extent.height,
+            .width = render->vulkan_swapchain_context.extent.width,
+            .height = render->vulkan_swapchain_context.extent.height,
             .layers = 1,
         };
 
         vkCreateFramebuffer(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             &framebuffer_info, 
             NULL, 
-            &vulkan_backend->vulkan_swapchain_context.framebuffer_array[image_index]
+            &render->vulkan_swapchain_context.framebuffer_array[image_index]
         );
     }
 }
 
-void vulkan_backend_destroy_swapchain_context(VulkanBackend* vulkan_backend)
+void vulkan_backend_destroy_swapchain_context(Render* render)
 {
-    for (u32 image_index = 0; image_index < vulkan_backend->vulkan_swapchain_context.image_count; ++image_index)
+    for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
         vkDestroySemaphore(
-            vulkan_backend->vulkan_device_context.device,
-            vulkan_backend->vulkan_swapchain_context.render_finished_array[image_index],
+            render->vulkan_device_context.device,
+            render->vulkan_swapchain_context.render_finished_array[image_index],
             NULL
         );
 
         vkDestroyFramebuffer(
-            vulkan_backend->vulkan_device_context.device,
-            vulkan_backend->vulkan_swapchain_context.framebuffer_array[image_index],
+            render->vulkan_device_context.device,
+            render->vulkan_swapchain_context.framebuffer_array[image_index],
             NULL
         );
 
         vkDestroyImageView(
-            vulkan_backend->vulkan_device_context.device,
-            vulkan_backend->vulkan_swapchain_context.image_view_array[image_index],
+            render->vulkan_device_context.device,
+            render->vulkan_swapchain_context.image_view_array[image_index],
             NULL
         );
     }
 
     vkDestroyImageView(
-        vulkan_backend->vulkan_device_context.device,
-        vulkan_backend->vulkan_swapchain_context.depth_image_view,
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.depth_image_view,
         NULL
     );
 
     vkDestroyImage(
-        vulkan_backend->vulkan_device_context.device,
-        vulkan_backend->vulkan_swapchain_context.depth_image,
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.depth_image,
         NULL
     );
 
     vkFreeMemory(
-        vulkan_backend->vulkan_device_context.device,
-        vulkan_backend->vulkan_swapchain_context.depth_memory,
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.depth_memory,
         NULL
     );
 
-    free(vulkan_backend->vulkan_swapchain_context.image_array);
-    free(vulkan_backend->vulkan_swapchain_context.image_view_array);
-    free(vulkan_backend->vulkan_swapchain_context.framebuffer_array);
-    free(vulkan_backend->vulkan_swapchain_context.render_finished_array);
+    free(render->vulkan_swapchain_context.image_array);
+    free(render->vulkan_swapchain_context.image_view_array);
+    free(render->vulkan_swapchain_context.framebuffer_array);
+    free(render->vulkan_swapchain_context.render_finished_array);
 
     vkDestroySwapchainKHR(
-        vulkan_backend->vulkan_device_context.device,
-        vulkan_backend->vulkan_swapchain_context.swapchain,
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.swapchain,
         NULL
     );
 }

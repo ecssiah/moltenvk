@@ -1,4 +1,4 @@
-#include "platform/platform_internal.h"
+#include "platform/platform.h"
 
 #include <stdlib.h>
 

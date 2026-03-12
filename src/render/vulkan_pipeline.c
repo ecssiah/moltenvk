@@ -1,25 +1,23 @@
-#include "vulkan_backend_internal.h"
+#include "render/render.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <vulkan/vulkan_core.h>
 
 #include "core/core.h"
 #include "core/log/log.h"
-#include "render/render_internal.h"
 
-void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
+void vulkan_backend_create_and_init_voxel_pipeline(Render* render)
 {
     VkShaderModule vert_module = 
         vulkan_backend_create_shader_module(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             "assets/shaders/bin/test.vert.spv"
         );
 
     VkShaderModule frag_module = 
         vulkan_backend_create_shader_module(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             "assets/shaders/bin/test.frag.spv"
         );
 
@@ -88,8 +86,8 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
     {
         .x = 0.0f,
         .y = 0.0f,
-        .width = (f32)vulkan_backend->vulkan_swapchain_context.extent.width,
-        .height = (f32)vulkan_backend->vulkan_swapchain_context.extent.height,
+        .width = (f32)render->vulkan_swapchain_context.extent.width,
+        .height = (f32)render->vulkan_swapchain_context.extent.height,
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -97,7 +95,7 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
     VkRect2D scissor_rect =
     {
         .offset = { 0, 0 },
-        .extent = vulkan_backend->vulkan_swapchain_context.extent,
+        .extent = render->vulkan_swapchain_context.extent,
     };
 
     VkPipelineViewportStateCreateInfo pipeline_viewport_state_info =
@@ -195,10 +193,10 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
 
     VkResult descriptor_set_layout_result = 
         vkCreateDescriptorSetLayout(
-            vulkan_backend->vulkan_device_context.device,
+            render->vulkan_device_context.device,
             &descriptor_set_layout_info,
             NULL,
-            &vulkan_backend->voxel_pipeline_context.descriptor_set_layout
+            &render->voxel_pipeline_context.descriptor_set_layout
         );
 
     if (descriptor_set_layout_result != VK_SUCCESS)
@@ -222,10 +220,10 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
 
     VkResult descriptor_pool_result =
         vkCreateDescriptorPool(
-            vulkan_backend->vulkan_device_context.device,
+            render->vulkan_device_context.device,
             &pool_info,
             NULL,
-            &vulkan_backend->voxel_pipeline_context.descriptor_pool
+            &render->voxel_pipeline_context.descriptor_pool
         );
 
     if (descriptor_pool_result != VK_SUCCESS)
@@ -236,16 +234,16 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
     VkDescriptorSetAllocateInfo descriptor_set_allocate_info =
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = vulkan_backend->voxel_pipeline_context.descriptor_pool,
+        .descriptorPool = render->voxel_pipeline_context.descriptor_pool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &vulkan_backend->voxel_pipeline_context.descriptor_set_layout
+        .pSetLayouts = &render->voxel_pipeline_context.descriptor_set_layout
     };
 
     VkResult descriptor_set_result =
         vkAllocateDescriptorSets(
-            vulkan_backend->vulkan_device_context.device,
+            render->vulkan_device_context.device,
             &descriptor_set_allocate_info,
-            &vulkan_backend->voxel_pipeline_context.descriptor_set
+            &render->voxel_pipeline_context.descriptor_set
         );
 
     if (descriptor_set_result != VK_SUCCESS)
@@ -264,17 +262,17 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
-        .pSetLayouts = &vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
+        .pSetLayouts = &render->voxel_pipeline_context.descriptor_set_layout,
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &push_constant_range,
     };
 
     VkResult pipeline_layout_result = 
         vkCreatePipelineLayout(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             &pipeline_layout_info, 
             NULL,
-            &vulkan_backend->voxel_pipeline_context.layout
+            &render->voxel_pipeline_context.layout
         );
 
     if (pipeline_layout_result != VK_SUCCESS) 
@@ -295,8 +293,8 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
         .pDepthStencilState = &pipeline_depth_stencil_state_info,
         .pColorBlendState = &pipeline_color_blend_state_info,
         .pDynamicState = &pipeline_dynamic_state_info,
-        .layout = vulkan_backend->voxel_pipeline_context.layout,
-        .renderPass = vulkan_backend->voxel_pipeline_context.render_pass,
+        .layout = render->voxel_pipeline_context.layout,
+        .renderPass = render->voxel_pipeline_context.render_pass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1,
@@ -304,12 +302,12 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
 
     VkResult graphics_pipeline_result = 
         vkCreateGraphicsPipelines(
-            vulkan_backend->vulkan_device_context.device, 
+            render->vulkan_device_context.device, 
             VK_NULL_HANDLE, 
             1, 
             &graphics_pipeline_info, 
             NULL, 
-            &vulkan_backend->voxel_pipeline_context.pipeline
+            &render->voxel_pipeline_context.pipeline
         );
 
     if (graphics_pipeline_result != VK_SUCCESS) 
@@ -317,83 +315,83 @@ void vulkan_backend_create_voxel_pipeline(VulkanBackend* vulkan_backend)
         LOG_FATAL("Failed to create Vulkan graphics pipeline");
     }
 
-    vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, frag_module, NULL);
-    vkDestroyShaderModule(vulkan_backend->vulkan_device_context.device, vert_module, NULL);
+    vkDestroyShaderModule(render->vulkan_device_context.device, frag_module, NULL);
+    vkDestroyShaderModule(render->vulkan_device_context.device, vert_module, NULL);
 
     LOG_INFO("Voxel Pipeline Initialized");
 }
 
-void vulkan_backend_destroy_voxel_pipeline(VulkanBackend* vulkan_backend)
+void vulkan_backend_destroy_voxel_pipeline(Render* render)
 {
-    VkDevice device = vulkan_backend->vulkan_device_context.device;
+    VkDevice device = render->vulkan_device_context.device;
 
     // Destroy texture resources
     vkDestroySampler(
         device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
+        render->voxel_pipeline_context.vulkan_texture.sampler,
         NULL
     );
 
     vkDestroyImageView(
         device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
+        render->voxel_pipeline_context.vulkan_texture.image_view,
         NULL
     );
 
     vkDestroyImage(
         device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image,
+        render->voxel_pipeline_context.vulkan_texture.image,
         NULL
     );
 
     vkFreeMemory(
         device,
-        vulkan_backend->voxel_pipeline_context.vulkan_texture.image_memory,
+        render->voxel_pipeline_context.vulkan_texture.image_memory,
         NULL
     );
 
     // Destroy vertex buffer
     vkDestroyBuffer(
         device,
-        vulkan_backend->voxel_pipeline_context.vertex_buffer,
+        render->voxel_pipeline_context.vertex_buffer,
         NULL
     );
 
     vkFreeMemory(
         device,
-        vulkan_backend->voxel_pipeline_context.vertex_memory,
+        render->voxel_pipeline_context.vertex_memory,
         NULL
     );
 
     // Destroy descriptor resources
     vkDestroyDescriptorPool(
         device,
-        vulkan_backend->voxel_pipeline_context.descriptor_pool,
+        render->voxel_pipeline_context.descriptor_pool,
         NULL
     );
 
     vkDestroyDescriptorSetLayout(
         device,
-        vulkan_backend->voxel_pipeline_context.descriptor_set_layout,
+        render->voxel_pipeline_context.descriptor_set_layout,
         NULL
     );
 
     // Destroy pipeline objects
     vkDestroyPipeline(
         device,
-        vulkan_backend->voxel_pipeline_context.pipeline,
+        render->voxel_pipeline_context.pipeline,
         NULL
     );
 
     vkDestroyPipelineLayout(
         device,
-        vulkan_backend->voxel_pipeline_context.layout,
+        render->voxel_pipeline_context.layout,
         NULL
     );
 
     vkDestroyRenderPass(
         device,
-        vulkan_backend->voxel_pipeline_context.render_pass,
+        render->voxel_pipeline_context.render_pass,
         NULL
     );
 }
@@ -433,21 +431,21 @@ VkShaderModule vulkan_backend_create_shader_module(VkDevice device, const char* 
 }
 
 void vulkan_backend_update_texture_descriptor(
-    VulkanBackend* vulkan_backend,
+    Render* render,
     VkImageView image_view,
     VkSampler sampler
 ) {
     VkDescriptorImageInfo image_info =
     {
-        .sampler = vulkan_backend->voxel_pipeline_context.vulkan_texture.sampler,
-        .imageView = vulkan_backend->voxel_pipeline_context.vulkan_texture.image_view,
+        .sampler = render->voxel_pipeline_context.vulkan_texture.sampler,
+        .imageView = render->voxel_pipeline_context.vulkan_texture.image_view,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkWriteDescriptorSet write_descriptor_set =
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = vulkan_backend->voxel_pipeline_context.descriptor_set,
+        .dstSet = render->voxel_pipeline_context.descriptor_set,
         .dstBinding = 0,
         .dstArrayElement = 0,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -456,7 +454,7 @@ void vulkan_backend_update_texture_descriptor(
     };
 
     vkUpdateDescriptorSets(
-        vulkan_backend->vulkan_device_context.device,
+        render->vulkan_device_context.device,
         1,
         &write_descriptor_set,
         0,

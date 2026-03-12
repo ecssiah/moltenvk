@@ -55,18 +55,17 @@ target_sources(
     src/core/log/log.c
     src/core/math/view.c
     src/core/math/projection.c
-    src/backend/vulkan/vulkan_commands.c
-    src/backend/vulkan/vulkan_memory.c
-    src/backend/vulkan/vulkan_device.c
-    src/backend/vulkan/vulkan_pipeline.c
-    src/backend/vulkan/vulkan_frame.c
-    src/backend/vulkan/vulkan_swapchain.c
-    src/backend/vulkan/vulkan_backend.c
     src/platform/platform.c
     src/platform/platform_input.c
     src/render/image.c
     src/render/mesh.c
     src/render/texture.c
+    src/render/vulkan_commands.c
+    src/render/vulkan_memory.c
+    src/render/vulkan_device.c
+    src/render/vulkan_pipeline.c
+    src/render/vulkan_frame.c
+    src/render/vulkan_swapchain.c
     src/render/render.c
     external/stb/stb_image_loader.c
 )
