@@ -4,8 +4,8 @@
 
 #include "core/log/log.h"
 
-static void platform_input_init(PlatformInput* platform_input);
-static void platform_window_init(PlatformWindow* platform_window);
+static void platform_input_init(Platform* platform);
+static void platform_window_init(Platform* platform);
 
 Platform* platform_create(void)
 {
@@ -24,8 +24,8 @@ void platform_destroy(Platform* platform)
 
 void platform_init(Platform* platform)
 {
-    platform_input_init(&platform->platform_input);
-    platform_window_init(&platform->platform_window);
+    platform_input_init(platform);
+    platform_window_init(platform);
 }
 
 bool platform_is_active(Platform* platform)
@@ -64,29 +64,47 @@ void platform_update(Platform* platform)
     }
 }
 
-static void platform_input_init(PlatformInput* platform_input)
+void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height)
+{
+    Platform* platform = glfwGetWindowUserPointer(window);
+
+    if (width == 0 || height == 0)
+    {
+        return;
+    }
+
+    platform->platform_window.width  = (u32)width;
+    platform->platform_window.height = (u32)height;
+
+    if (platform->framebuffer_resize_callback)
+    {
+        platform->framebuffer_resize_callback(platform, width, height);
+    }
+}
+
+static void platform_input_init(Platform* platform)
 {
     for (int key = 0; key < GLFW_KEY_LAST + 1; ++key)
     {
-        platform_input->current_key_array[key] = false;
-        platform_input->previous_key_array[key] = false;
+        platform->platform_input.current_key_array[key] = false;
+        platform->platform_input.previous_key_array[key] = false;
     }
     
     for (int button = 0; button < GLFW_MOUSE_BUTTON_LAST + 1; ++button)
     {
-        platform_input->current_mouse_array[button] = false;
-        platform_input->previous_mouse_array[button] = false;
+        platform->platform_input.current_mouse_array[button] = false;
+        platform->platform_input.previous_mouse_array[button] = false;
     }
 
-    platform_input->current_mouse_x = 0.0;
-    platform_input->current_mouse_y = 0.0;
-    platform_input->previous_mouse_x = 0.0;
-    platform_input->previous_mouse_y = 0.0;
+    platform->platform_input.current_mouse_x = 0.0;
+    platform->platform_input.current_mouse_y = 0.0;
+    platform->platform_input.previous_mouse_x = 0.0;
+    platform->platform_input.previous_mouse_y = 0.0;
 
     LOG_INFO("Platform Input initialized");
 }
 
-static void platform_window_init(PlatformWindow* platform_window)
+static void platform_window_init(Platform* platform)
 {
     if (glfwInit())
     {
@@ -101,7 +119,7 @@ static void platform_window_init(PlatformWindow* platform_window)
 
     const char* window_title = "Vulkan Test";
 
-    platform_window->glfw_window = glfwCreateWindow(
+    platform->platform_window.glfw_window = glfwCreateWindow(
         WINDOW_WIDTH, 
         WINDOW_HEIGHT, 
         window_title, 
@@ -109,21 +127,28 @@ static void platform_window_init(PlatformWindow* platform_window)
         NULL
     );
 
+    glfwSetWindowUserPointer(platform->platform_window.glfw_window, platform);
+
+    glfwSetFramebufferSizeCallback(
+        platform->platform_window.glfw_window,
+        glfw_framebuffer_resize_callback
+    );
+
     glfwSetInputMode(
-        platform_window->glfw_window, 
+        platform->platform_window.glfw_window, 
         GLFW_CURSOR, 
         GLFW_CURSOR_DISABLED
     );
 
     int width, height;
-    glfwGetFramebufferSize(platform_window->glfw_window, &width, &height);
+    glfwGetFramebufferSize(platform->platform_window.glfw_window, &width, &height);
 
-    platform_window->width  = (u32)width;
-    platform_window->height = (u32)height;
+    platform->platform_window.width  = (u32)width;
+    platform->platform_window.height = (u32)height;
 
-    platform_window->close_requested = false;
+    platform->platform_window.close_requested = false;
 
-    if (platform_window->glfw_window)
+    if (platform->platform_window.glfw_window)
     {
         LOG_INFO("GLFW window created");
     }

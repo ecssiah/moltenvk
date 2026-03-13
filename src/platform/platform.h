@@ -31,12 +31,17 @@ typedef struct PlatformWindow
 
     u32 width;
     u32 height;
+
     bool close_requested;
 }
 PlatformWindow;
 
 typedef struct Platform
 {
+    struct Render* render;
+
+    void (*framebuffer_resize_callback)(struct Platform* platform, int width, int height);
+
     struct PlatformInput platform_input;
     struct PlatformWindow platform_window;
 }

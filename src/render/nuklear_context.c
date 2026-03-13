@@ -1,5 +1,11 @@
 #include "render/render.h"
+
 #include <string.h>
+
+#include "core/log/log.h"
+
+#define NK_VERTEX_BUFFER_SIZE (1024 * 1024)   // 1 MB
+#define NK_INDEX_BUFFER_SIZE  (512 * 1024)    // 512 KB
 
 void render_nuklear_init(Render *render)
 {
@@ -11,24 +17,83 @@ void render_nuklear_init(Render *render)
 
     render->nuklear_context.font = nk_font_atlas_add_default(atlas, 13.0f, NULL);
 
+    if (!render->nuklear_context.font)
+    {
+        LOG_FATAL("Failed to load nuklear font");
+    }
+
+
     int width;
     int height;
     const void* image = nk_font_atlas_bake(atlas, &width, &height, NK_FONT_ATLAS_RGBA32);
 
-    /* upload image to Vulkan texture here */
-    /* create image, image view, sampler, descriptor */
+    render_vulkan_create_texture_from_pixels(
+        render,
+        image,
+        width,
+        height,
+        &render->nuklear_context.font_texture.image,
+        &render->nuklear_context.font_texture.image_memory,
+        &render->nuklear_context.font_texture.image_view,
+        &render->nuklear_context.font_texture.sampler
+    );
+
+    VkDescriptorImageInfo image_info =
+    {
+        .sampler = render->nuklear_context.font_texture.sampler,
+        .imageView = render->nuklear_context.font_texture.image_view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkWriteDescriptorSet write =
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = render->nuklear_pipeline_context.descriptor_set,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &image_info
+    };
+
+    vkUpdateDescriptorSets(
+        render->vulkan_device_context.device,
+        1,
+        &write,
+        0,
+        NULL
+    );
 
     nk_font_atlas_end(
         atlas,
-        nk_handle_ptr(render),
+        nk_handle_ptr(&render->nuklear_context.font_texture),
         &render->nuklear_context.null_texture
     );
 
     nk_init_default(ctx, &render->nuklear_context.font->handle);
+    nk_style_set_font(ctx, &render->nuklear_context.font->handle);
 
     nk_buffer_init_default(&render->nuklear_context.commands);
     nk_buffer_init_default(&render->nuklear_context.vertices);
     nk_buffer_init_default(&render->nuklear_context.indices);
+
+    render_vulkan_create_buffer(
+        render,
+        NK_VERTEX_BUFFER_SIZE,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &render->nuklear_context.vertex_buffer,
+        &render->nuklear_context.vertex_buffer_memory
+    );
+
+    render_vulkan_create_buffer(
+        render,
+        NK_INDEX_BUFFER_SIZE,
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &render->nuklear_context.index_buffer,
+        &render->nuklear_context.index_buffer_memory
+    );
 
     vkMapMemory(
         render->vulkan_device_context.device, 
@@ -201,14 +266,13 @@ void render_nuklear_record(Render* render, VkCommandBuffer cmd)
         NULL
     );
 
-    /* Push constants for coordinate transform */
-    NuklearPushConstants push;
+    NuklearPushConstants nuklear_push_constants;
 
-    push.scale[0] = 2.0f / render->vulkan_swapchain_context.extent.width;
-    push.scale[1] = -2.0f / render->vulkan_swapchain_context.extent.height;
+    nuklear_push_constants.scale[0] = 2.0f / render->vulkan_swapchain_context.extent.width;
+    nuklear_push_constants.scale[1] = -2.0f / render->vulkan_swapchain_context.extent.height;
 
-    push.translate[0] = -1.0f;
-    push.translate[1] = 1.0f;
+    nuklear_push_constants.translate[0] = -1.0f;
+    nuklear_push_constants.translate[1] = 1.0f;
 
     vkCmdPushConstants(
         cmd,
@@ -216,22 +280,47 @@ void render_nuklear_record(Render* render, VkCommandBuffer cmd)
         VK_SHADER_STAGE_VERTEX_BIT,
         0,
         sizeof(NuklearPushConstants),
-        &push
+        &nuklear_push_constants
     );
 
-    /* Iterate Nuklear draw commands */
     nk_draw_foreach(draw_cmd, ctx, &render->nuklear_context.commands)
     {
         if (!draw_cmd->elem_count)
+        {
             continue;
+        }
 
         VkRect2D scissor;
 
         scissor.offset.x = (i32)draw_cmd->clip_rect.x;
+
+        if (scissor.offset.x < 0) 
+        {
+            scissor.offset.x = 0;
+        }
+
         scissor.offset.y = (i32)draw_cmd->clip_rect.y;
 
-        scissor.extent.width  = (u32)draw_cmd->clip_rect.w;
+        if (scissor.offset.y < 0) 
+        {
+            scissor.offset.y = 0;
+        }
+
+        u32 max_width = render->window_width - scissor.offset.x;
+        u32 max_height = render->window_height - scissor.offset.y;
+
+        scissor.extent.width = (u32)draw_cmd->clip_rect.w;
         scissor.extent.height = (u32)draw_cmd->clip_rect.h;
+
+        if (scissor.extent.width > max_width)
+        {
+            scissor.extent.width = max_width;
+        }
+
+        if (scissor.extent.height > max_height)
+        {
+            scissor.extent.height = max_height;
+        }
 
         vkCmdSetScissor(cmd, 0, 1, &scissor);
 

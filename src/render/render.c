@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #define GLFW_INCLUDE_VULKAN
 
+#include "core/log/log.h"
 #include "core/math/math.h"
 #include "app/camera.h"
 #include "app/world/world.h"
@@ -37,6 +38,11 @@ void render_destroy(Render* render)
 
 void render_init(Render* render, Platform* platform)
 {
+    render->window_width = WINDOW_WIDTH;
+    render->window_height = WINDOW_HEIGHT;
+
+    render->framebuffer_resized = false;
+
     glm_vec3_zero(render->position);
 
     glm_mat4_identity(render->view_matrix);
@@ -44,7 +50,7 @@ void render_init(Render* render, Platform* platform)
     glm_mat4_identity(render->projection_view_matrix);
 
     const float fov = glm_rad(60.0f);
-    const float aspect_ratio = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
+    const float aspect_ratio = (float)render->window_width / (float)render->window_height;
     const float near_plane = 0.1f;
     const float far_plane = 10.0f;
 
@@ -62,6 +68,11 @@ void render_init(Render* render, Platform* platform)
     render_vulkan_create_and_init_frame_context(render);
 
     render_vulkan_create_voxel_mesh(render);
+
+    render_nuklear_init(render);
+
+    platform->framebuffer_resize_callback = render_framebuffer_resize_callback;
+    platform->render = render;
 }
 
 void render_update(Render* render, World* world, f64 delta_time)
@@ -80,71 +91,154 @@ void render_update(Render* render, World* world, f64 delta_time)
     glm_mat4_mul(render->projection_matrix, render->view_matrix, render->projection_view_matrix);
 }
 
-void render_draw(Render* render)
+void render_begin_frame(Render* render, VulkanFrame* vulkan_frame)
 {
-    render_begin_frame(render);
-    render_record_frame(render);
-    render_submit_frame(render);
-    render_present_frame(render);
-
-    VulkanFrame* frame = &render->vulkan_frame_context.frame_array[render->vulkan_frame_context.frame_index];
-
     vkWaitForFences(
-        render->vulkan_device_context.device, 
-        1, 
-        &frame->in_flight, 
-        VK_TRUE, 
+        render->vulkan_device_context.device,
+        1,
+        &vulkan_frame->in_flight_fence,
+        VK_TRUE,
         UINT64_MAX
     );
+}
 
+bool render_record_frame(Render* render, VulkanFrame* vulkan_frame)
+{
     u32 image_index;
 
-    vkAcquireNextImageKHR(
-        render->vulkan_device_context.device, 
-        render->vulkan_swapchain_context.swapchain, 
-        UINT64_MAX, 
-        frame->image_available, 
-        VK_NULL_HANDLE, 
+    VkResult acquire_result = vkAcquireNextImageKHR(
+        render->vulkan_device_context.device,
+        render->vulkan_swapchain_context.swapchain,
+        UINT64_MAX,
+        vulkan_frame->image_available_semaphore,
+        VK_NULL_HANDLE,
         &image_index
     );
 
-    vkResetFences(render->vulkan_device_context.device, 1, &frame->in_flight);
-    vkResetCommandBuffer(frame->command_buffer, 0);
+    if (acquire_result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        render_vulkan_recreate_swapchain(render);
 
-    render_vulkan_record_command_buffer(render, frame->command_buffer, image_index);
+        return false;
+    }
 
-    VkPipelineStageFlags wait_stage_array[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    if (acquire_result != VK_SUCCESS && acquire_result != VK_SUBOPTIMAL_KHR)
+    {
+        LOG_FATAL("Failed to acquire swapchain image.");
+    }
 
-    VkSubmitInfo submit_info = 
+    vkResetFences(render->vulkan_device_context.device, 1, &vulkan_frame->in_flight_fence);
+    vkResetCommandBuffer(vulkan_frame->command_buffer, 0);
+
+    render_vulkan_record_command_buffer(render, vulkan_frame->command_buffer, image_index);
+
+    // Record Nuklear UI draw commands into the same command buffer
+    render_nuklear_record(render, vulkan_frame->command_buffer);
+
+    vulkan_frame->image_index = image_index;
+
+    return true;
+}
+
+void render_submit_frame(Render* render, VulkanFrame* vulkan_frame)
+{
+    u32 image_index = vulkan_frame->image_index;
+
+    VkPipelineStageFlags wait_stage_array[] = 
+    {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+
+    VkSubmitInfo submit_info =
     {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &frame->image_available,
+        .pWaitSemaphores = &vulkan_frame->image_available_semaphore,
         .pWaitDstStageMask = wait_stage_array,
         .commandBufferCount = 1,
-        .pCommandBuffers = &frame->command_buffer,
+        .pCommandBuffers = &vulkan_frame->command_buffer,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &render->vulkan_swapchain_context.render_finished_array[image_index],
+        .pSignalSemaphores = &vulkan_frame->render_finished_semaphore,
     };
 
     vkQueueSubmit(
         render->vulkan_device_context.graphics_queue,
         1,
         &submit_info,
-        frame->in_flight
+        vulkan_frame->in_flight_fence
     );
+}
 
-    VkPresentInfoKHR present_info = 
+void render_present_frame(Render* render, VulkanFrame* vulkan_frame)
+{
+    u32 image_index = vulkan_frame->image_index;
+
+    VkPresentInfoKHR present_info =
     {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &render->vulkan_swapchain_context.render_finished_array[image_index],
+        .pWaitSemaphores = &vulkan_frame->render_finished_semaphore,
         .swapchainCount = 1,
         .pSwapchains = &render->vulkan_swapchain_context.swapchain,
         .pImageIndices = &image_index,
     };
 
-    vkQueuePresentKHR(render->vulkan_device_context.present_queue, &present_info);
+    VkResult present_result = vkQueuePresentKHR(
+        render->vulkan_device_context.present_queue,
+        &present_info
+    );
 
-    render->vulkan_frame_context.frame_index = (render->vulkan_frame_context.frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
+    if (present_result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_SUBOPTIMAL_KHR)
+    {
+        render_vulkan_recreate_swapchain(render);
+
+        return;
+    }
+
+    if (present_result != VK_SUCCESS)
+    {
+        LOG_FATAL("Failed to present swapchain image");
+    }
+}
+
+void render_draw(Render* render)
+{
+    if (render->framebuffer_resized)
+    {
+        render_vulkan_recreate_swapchain(render);
+
+        render->framebuffer_resized = false;
+    }
+
+    u32 current_frame_index = render->vulkan_frame_context.frame_index;
+
+    VulkanFrame* vulkan_frame = &render->vulkan_frame_context.frame_array[current_frame_index];
+
+    render_begin_frame(render, vulkan_frame);
+
+    render_nuklear_draw(render);
+    render_nuklear_convert(render);
+    render_nuklear_upload(render);
+
+    if (!render_record_frame(render, vulkan_frame))
+    {
+        return;
+    }
+
+    render_submit_frame(render, vulkan_frame);
+    render_present_frame(render, vulkan_frame);
+
+    u32 next_frame_index = (render->vulkan_frame_context.frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
+
+    render->vulkan_frame_context.frame_index = next_frame_index;
+}
+
+void render_framebuffer_resize_callback(Platform* platform, int width, int height)
+{
+    Render* render = platform->render;
+
+    render->window_width = width;
+    render->window_height = height;
+
+    render->framebuffer_resized = true;
 }

@@ -1,7 +1,7 @@
 #version 450
 
 layout(binding = 0) 
-uniform sampler2D texture;
+uniform sampler2D texture_sampler;
 
 layout(location = 0) 
 in vec2 frag_uv;
@@ -14,7 +14,7 @@ out vec4 out_color;
 
 void main()
 {
-    vec4 texture_color = texture(texture, frag_uv);
+    vec4 texture_color = texture(texture_sampler, frag_uv);
 
     out_color = frag_color * texture_color;
 }

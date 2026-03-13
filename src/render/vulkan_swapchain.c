@@ -66,6 +66,8 @@ void render_vulkan_create_swapchain(Render* render)
         .preTransform = surface_capabilities.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = VK_PRESENT_MODE_FIFO_KHR,
+        .clipped = VK_TRUE,
+        .oldSwapchain = VK_NULL_HANDLE,
     };
 
     u32 min_image_count = surface_capabilities.minImageCount + 1;
@@ -106,7 +108,6 @@ void render_vulkan_create_swapchain(Render* render)
     render->vulkan_swapchain_context.image_array = malloc(sizeof (VkImage) * image_count);
     render->vulkan_swapchain_context.image_view_array = malloc(sizeof (VkImageView) * image_count);
     render->vulkan_swapchain_context.framebuffer_array = malloc(sizeof (VkFramebuffer) * image_count);
-    render->vulkan_swapchain_context.render_finished_array = malloc(sizeof(VkSemaphore) * image_count);
 
     vkGetSwapchainImagesKHR(
         render->vulkan_device_context.device, 
@@ -306,22 +307,25 @@ void render_vulkan_create_depth_resources(Render* render)
     );
 }
 
+void render_vulkan_recreate_swapchain(Render* render)
+{
+    if (render->window_width == 0 || render->window_height == 0)
+    {
+        return;
+    }
+
+    vkDeviceWaitIdle(render->vulkan_device_context.device);
+
+    render_vulkan_destroy_swapchain_context(render);
+    render_vulkan_create_and_init_swapchain_context(render);
+
+    LOG_INFO("Vulkan Swapchain Recreated");
+}
+
 void render_vulkan_create_frame_buffers(Render* render)
 {
     for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
-        VkSemaphoreCreateInfo semaphore_create_info = 
-        {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        };
-
-        vkCreateSemaphore(
-            render->vulkan_device_context.device, 
-            &semaphore_create_info, 
-            NULL, 
-            &render->vulkan_swapchain_context.render_finished_array[image_index]
-        );
-
         VkImageView attachments[2] =
         {
             render->vulkan_swapchain_context.image_view_array[image_index],
@@ -352,12 +356,6 @@ void render_vulkan_destroy_swapchain_context(Render* render)
 {
     for (u32 image_index = 0; image_index < render->vulkan_swapchain_context.image_count; ++image_index)
     {
-        vkDestroySemaphore(
-            render->vulkan_device_context.device,
-            render->vulkan_swapchain_context.render_finished_array[image_index],
-            NULL
-        );
-
         vkDestroyFramebuffer(
             render->vulkan_device_context.device,
             render->vulkan_swapchain_context.framebuffer_array[image_index],
@@ -398,7 +396,6 @@ void render_vulkan_destroy_swapchain_context(Render* render)
     free(render->vulkan_swapchain_context.image_array);
     free(render->vulkan_swapchain_context.image_view_array);
     free(render->vulkan_swapchain_context.framebuffer_array);
-    free(render->vulkan_swapchain_context.render_finished_array);
 
     vkDestroySwapchainKHR(
         render->vulkan_device_context.device,

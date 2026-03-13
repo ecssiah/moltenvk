@@ -43,14 +43,21 @@ void render_vulkan_create_and_init_frame_context(Render* render)
             render->vulkan_device_context.device, 
             &semaphore_create_info, 
             NULL, 
-            &frame->image_available
+            &frame->image_available_semaphore
+        );
+
+        vkCreateSemaphore(
+            render->vulkan_device_context.device, 
+            &semaphore_create_info, 
+            NULL, 
+            &frame->render_finished_semaphore
         );
 
         vkCreateFence(
             render->vulkan_device_context.device, 
             &fence_create_info, 
             NULL, 
-            &frame->in_flight
+            &frame->in_flight_fence
         );
     }
 
@@ -65,8 +72,23 @@ void render_vulkan_destroy_frame_context(Render* render)
     {
         VulkanFrame* frame = &render->vulkan_frame_context.frame_array[frame_index];
 
-        vkDestroyFence(render->vulkan_device_context.device, frame->in_flight, NULL);
-        vkDestroySemaphore(render->vulkan_device_context.device, frame->image_available, NULL);
+        vkDestroyFence(
+            render->vulkan_device_context.device, 
+            frame->in_flight_fence, 
+            NULL
+        );
+
+        vkDestroySemaphore(
+            render->vulkan_device_context.device, 
+            frame->image_available_semaphore, 
+            NULL
+        );
+
+        vkDestroySemaphore(
+            render->vulkan_device_context.device, 
+            frame->image_available_semaphore, 
+            NULL
+        );
     }
 }
 

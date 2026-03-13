@@ -84,20 +84,22 @@ typedef struct Image
 {
     u32 width;
     u32 height;
+
     u32 channels;
+
     u8* pixels;
 }
 Image;
 
 typedef struct VulkanTexture
 {
+    u32 width;
+    u32 height;
+
     VkImage image;
     VkImageView image_view;
     VkDeviceMemory image_memory;
     VkSampler sampler;
-
-    u32 width;
-    u32 height;
 }
 VulkanTexture;
 
@@ -118,7 +120,6 @@ typedef struct VulkanSwapchainContext
     VkDeviceMemory depth_memory;
     VkImageView depth_image_view;
 
-    VkSemaphore* render_finished_array;
     VkFramebuffer* framebuffer_array;
 }
 VulkanSwapchainContext;
@@ -127,26 +128,35 @@ typedef struct VulkanPipelineContext
 {
     VkPipelineLayout layout;
     VkPipeline pipeline;
+
     VkDescriptorSetLayout descriptor_set_layout;
     VkDescriptorPool descriptor_pool;
     VkDescriptorSet descriptor_set;
+
     VkBuffer vertex_buffer;
     VkDeviceMemory vertex_memory;
+    
     VulkanTexture vulkan_texture;
 }
 VulkanPipelineContext;
 
 typedef struct VulkanFrame
 {
+    u32 image_index;
+    
     VkCommandBuffer command_buffer;
-    VkSemaphore image_available;
-    VkFence in_flight;
+
+    VkSemaphore image_available_semaphore;
+    VkSemaphore render_finished_semaphore;
+
+    VkFence in_flight_fence;
 }
 VulkanFrame;
 
 typedef struct VulkanFrameContext
 {
     u32 frame_index;
+
     VulkanFrame frame_array[MAX_FRAMES_IN_FLIGHT];
 }
 VulkanFrameContext;
@@ -157,9 +167,12 @@ typedef struct VulkanDeviceContext
     VkSurfaceKHR surface;
     VkPhysicalDevice physical_device;
     VkDevice device;
+
     u32 graphics_queue_family_index;
+
     VkQueue graphics_queue;
     VkQueue present_queue;
+
     VkCommandPool command_pool;
 }
 VulkanDeviceContext;
@@ -198,6 +211,8 @@ typedef struct NuklearContext
 
     struct nk_draw_null_texture null_texture;
 
+    VulkanTexture font_texture;
+
     VkImage font_image;
     VkDeviceMemory font_image_memory;
     VkImageView font_image_view;
@@ -218,6 +233,11 @@ NuklearContext;
 
 typedef struct Render
 {
+    u32 window_width;
+    u32 window_height;
+
+    bool framebuffer_resized;
+
     vec3 position;
 
     mat4 view_matrix;
@@ -242,10 +262,14 @@ void render_destroy(Render* render);
 void render_init(Render* render, Platform* platform);
 void render_update(Render* render, World* world, f64 delta_time);
 
-void render_begin_frame(Render* render);
-void render_record_frame(Render* render);
-void render_submit_frame(Render* render);
-void render_present_frame(Render* render);
+void render_begin_frame(Render* render, VulkanFrame* vulkan_frame);
+bool render_record_frame(Render* render, VulkanFrame* vulkan_frame);
+void render_submit_frame(Render* render, VulkanFrame* vulkan_frame);
+void render_present_frame(Render* render, VulkanFrame* vulkan_frame);
+void render_draw(Render* render);
+
+void render_framebuffer_resize(Render* render, u32 width, u32 height);
+void render_framebuffer_resize_callback(Platform* platform, int width, int height);
 
 Image render_image_load(const char* path);
 void render_image_destroy(Image* image);
@@ -271,6 +295,8 @@ void render_vulkan_create_frame_buffers(Render* render);
 void render_vulkan_create_image_views(Render* render);
 void render_vulkan_create_render_pass(Render* render);
 void render_vulkan_create_depth_resources(Render* render);
+
+void render_vulkan_recreate_swapchain(Render* render);
 
 // VULKAN PIPELINE
 
